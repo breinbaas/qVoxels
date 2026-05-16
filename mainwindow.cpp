@@ -1,21 +1,27 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include <QFileDialog> // For selecting directory
-#include <QInputDialog> // For getting project name
-#include <QDir>         // For directory operations
-#include <QMessageBox>  // For error/info messages
+#include <QFileDialog>
+#include <QInputDialog>
+#include <QDir>
+#include <QMessageBox>
 #include <QRegularExpression>
+#include <QFile>
+#include <QTextStream>
+#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , m_currentProject(nullptr)
 {
     ui->setupUi(this);
+    setWindowTitle(tr("qVoxels - No Project"));
 }
 
 MainWindow::~MainWindow()
 {
+    m_currentProject = nullptr;
     delete ui;
 
 }
@@ -141,6 +147,88 @@ void MainWindow::on_actionOpen_triggered()
 
 void MainWindow::on_actionCPTs_triggered()
 {
+    if (!m_currentProject) {
+        QMessageBox::warning(this, tr("No Project Open"), tr("Please open or create a project first."));
+        return;
+    }
 
+    QString cptsDirPath = QDir(m_currentProject->path()).filePath("cpts");
+    QDir cptsDir(cptsDirPath); // Create a QDir object for the CPTs directory
+
+    QStringList filePaths = QFileDialog::getOpenFileNames(this,
+                                                          tr("Select CPT Files to Import"),
+                                                          QDir::homePath(),
+                                                          tr("CPT Files (*.gef);;All Files (*)"));
+
+    if (filePaths.isEmpty()) {
+        return; // User cancelled file selection
+    }
+
+    QStringList successfulImports;
+    QStringList failedImports;
+    bool projectWasDirty = m_currentProject->isDirty(); // Check dirty state before imports
+
+    for (const QString &filePath : filePaths) {
+        QFileInfo fileInfo(filePath);
+        QString fileName = fileInfo.fileName();
+        QString destinationPath = cptsDir.filePath(fileName); // Use the QDir object
+
+        bool proceedWithImport = true;
+        if (QFile::exists(destinationPath)) {
+            QMessageBox::StandardButton reply;
+            reply = QMessageBox::question(this, tr("File Exists"),
+                                          tr("A file named '%1' already exists in the project's CPT folder. Overwrite?").arg(fileName),
+                                          QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+            if (reply == QMessageBox::Cancel) {
+                failedImports.append(QString("%1 (Import cancelled by user)").arg(fileName));
+                proceedWithImport = false;
+            }
+            if (reply == QMessageBox::No) {
+                failedImports.append(QString("%1 (Skipped - file already exists)").arg(fileName));
+                proceedWithImport = false;
+            }
+            // If Yes, proceed with import (importCptFile will handle overwriting)
+        }
+
+        if (proceedWithImport) {
+            QPair<bool, QString> result = m_currentProject->importCptFile(filePath, true); // Pass true to copy the file
+            if (result.first) {
+                successfulImports.append(fileName);
+            } else {
+                failedImports.append(QString("%1 (%2)").arg(fileName, result.second));
+            }
+        }
+    }
+
+    // Update the window title if the project's dirty state changed due to imports
+    if (m_currentProject->isDirty() && !projectWasDirty) {
+        setWindowTitle(tr("qVoxels - %1%2").arg(m_currentProject->name(), "*"));
+    }
+
+    // Display summary of import results
+    QString summaryMessage;
+    QTextStream stream(&summaryMessage);
+    stream << tr("CPT Import Results:\n\n");
+
+    if (!successfulImports.isEmpty()) {
+        stream << tr("Successfully imported (%1):\n").arg(successfulImports.size());
+        for (const QString &s : successfulImports) {
+            stream << "  - " << s << "\n";
+        }
+        stream << "\n";
+    }
+
+    if (!failedImports.isEmpty()) {
+        stream << tr("Failed to import (%1):\n").arg(failedImports.size());
+        for (const QString &f : failedImports) {
+            stream << "  - " << f << "\n";
+        }
+        stream << "\n";
+    }
+
+    if (successfulImports.isEmpty() && failedImports.isEmpty()) {
+        stream << tr("No CPT files were selected or processed.");
+    }
+
+    QMessageBox::information(this, tr("CPT Import Summary"), summaryMessage);
 }
-
