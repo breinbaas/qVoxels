@@ -1,6 +1,8 @@
-QT += widgets
+QT += widgets quick quickwidgets location positioning
 
 CONFIG += c++17
+RESOURCES += resources.qrc
+# LIBS += -lproj
 
 # You can make your code fail to compile if it uses deprecated APIs.
 # In order to do so, uncomment the following line.
@@ -9,6 +11,8 @@ CONFIG += c++17
 SOURCES += \
     borehole.cpp \
     cpt.cpp \
+    cptmap.cpp \
+    cptmapmanager.cpp \
     main.cpp \
     mainwindow.cpp \
     project.cpp
@@ -16,6 +20,8 @@ SOURCES += \
 HEADERS += \
     borehole.h \
     cpt.h \
+    cptmap.h \
+    cptmapmanager.h \
     mainwindow.h \
     project.h
 
@@ -28,4 +34,8 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
 
 DISTFILES += \
-    CODING.md
+    CODING.md \
+    map.qml
+
+RESOURCES += \
+    resources.qrc

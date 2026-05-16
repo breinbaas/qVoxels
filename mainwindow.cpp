@@ -16,15 +16,34 @@ MainWindow::MainWindow(QWidget *parent)
     , m_currentProject(nullptr)
 {
     ui->setupUi(this);
+    m_mapWidget = new CptMap(this);
+    setupMap();
     setWindowTitle(tr("qVoxels - No Project"));
 }
 
 MainWindow::~MainWindow()
 {
     m_currentProject = nullptr;
-    delete ui;
-
+    delete ui;    
 }
+
+void MainWindow::setupMap(){
+    QLayout *frameLayout = ui->frmMain->layout();
+    if (!frameLayout) {
+        frameLayout = new QVBoxLayout(ui->frmMain);
+        frameLayout->setContentsMargins(0, 0, 0, 0); // Make the map fit completely flush
+    }
+
+    ui->frmMain->layout()->addWidget(m_mapWidget);
+    connect(m_mapWidget, &CptMap::areaSelected, this, [](double minLat, double minLng, double maxLat, double maxLng) {
+        qDebug() << "Selected Bound Area coordinates passed to main logic:"
+                 << "\nMin Lat/Lng:" << minLat << "," << minLng
+                 << "\nMax Lat/Lng:" << maxLat << "," << maxLng;
+    });
+
+    m_mapWidget->setProject(m_currentProject);
+}
+
 
 void MainWindow::on_actionNew_triggered()
 {

@@ -2,7 +2,8 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "project.h" // Include Project header
+#include "project.h"
+#include "cptmap.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -20,13 +21,13 @@ public:
 
 private slots:
     void on_actionNew_triggered();
-
     void on_actionOpen_triggered();
-
     void on_actionCPTs_triggered();
 
 private:
     Ui::MainWindow *ui;
     Project *m_currentProject = nullptr; // Member to hold the current project
+    CptMap *m_mapWidget = nullptr;
+    void setupMap();
 };
 #endif // MAINWINDOW_H

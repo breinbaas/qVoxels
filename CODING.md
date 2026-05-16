@@ -1,3 +1,6 @@
+### Note to self
+
+Because OpenStreetMap tiles stream securely via HTTPS, make sure the OpenSSL binaries (libcrypto and libssl) are present in your Windows deployment directory alongside your executable, otherwise map tiles will load as blank gray grids.
 
 ### example of cpt loading
 

@@ -28,6 +28,9 @@ public:
     QString name() const { return m_name; }
     double x() const { return m_x; }
     double y() const { return m_y; }
+    double latitude() const { return m_latitude; }
+    double longitude() const { return m_longitude; }
+
     QString date() const { return m_date; }
     double preExcavatedDepth() const { return m_preExcavatedDepth; }
 
@@ -41,6 +44,8 @@ private:
     QString m_name = "";
     double m_x = 0.0;
     double m_y = 0.0;
+    double m_latitude = 0.0;
+    double m_longitude = 0.0;
     QString m_date = "";
     double m_preExcavatedDepth = 0.0;
 
