@@ -11,6 +11,11 @@ Item {
     Plugin {
         id: mapPlugin
         name: "osm"
+
+        PluginParameter {
+            name: "osm.mapping.custom.host"
+            value: "https://tile.openstreetmap.org/"
+        }
     }
 
     Map {
@@ -19,7 +24,7 @@ Item {
         plugin: mapPlugin
         center: QtPositioning.coordinate(52.5200, 13.4050)
         zoomLevel: 13
-
+        activeMapType: map.supportedMapTypes[map.supportedMapTypes.length - 1]
 
 
         property bool selectionMode: false
@@ -90,5 +95,48 @@ Item {
                 }
             }
         }
+        MapItemView {
+            model: cptManager.cptList
+
+            delegate: MapItemGroup {
+                // Enclosing everything inside a group fixes the "child items" error
+
+                MapCircle {
+                    // Access properties natively via modelData or model (depending on your model type)
+                    center: QtPositioning.coordinate(modelData.latitude, modelData.longitude)
+                    radius: 5 // Radius in meters
+                    color: "red"
+                    border.color: "darkred"
+                    border.width: 1
+                }
+
+                MapQuickItem {
+                    coordinate: QtPositioning.coordinate(modelData.latitude, modelData.longitude)
+                    anchorPoint.x: sourceItem.width / 2  // Center horizontally
+                    anchorPoint.y: sourceItem.height + 5 // Position just above the dot
+
+                    sourceItem: Text {
+                        text: modelData.name || "CPT"
+                        font.pixelSize: 12
+                        color: "black"
+
+                        // Optional styling to make text legible against a map
+                        style: Text.Outline
+                        styleColor: "white"
+
+                        visible: map.zoomLevel > 14 // Only show labels at higher zoom levels
+                    }
+                }
+            }
+        }
+        Connections {
+            target: cptManager
+            onCptListChanged: {
+                if (cptManager.cptList.length > 0) {
+                    map.fitViewportToMapItems();
+                }
+            }
+        }
+
     }
 }

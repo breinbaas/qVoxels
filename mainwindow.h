@@ -24,6 +24,8 @@ private slots:
     void on_actionOpen_triggered();
     void on_actionCPTs_triggered();
 
+    void on_cptListChanged();
+
 private:
     Ui::MainWindow *ui;
     Project *m_currentProject = nullptr; // Member to hold the current project

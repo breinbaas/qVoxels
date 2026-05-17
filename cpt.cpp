@@ -4,6 +4,8 @@
 #include <QDebug>
 #include <cmath>
 
+#include "helpers.h"
+
 Cpt::Cpt(QObject *parent) : QObject(parent)
 {
 }
@@ -149,6 +151,12 @@ void Cpt::parseHeaderLine(Cpt *cpt, const QString &line, GefMetadata &metadata)
         if (argList.size() >= 3) {
             cpt->m_x = std::round(argList[1].trimmed().toDouble() * 100.0) / 100.0;
             cpt->m_y = std::round(argList[2].trimmed().toDouble() * 100.0) / 100.0;
+
+            WGS84Coord wgs84 = convertRDToWGS84(cpt->m_x, cpt->m_y);
+            cpt->m_latitude = wgs84.latitude;
+            cpt->m_longitude = wgs84.longitude;
+
+            //qDebug() << "Cpt latitude: " << cpt->m_latitude << " lon: " << cpt->m_longitude;
         }
     }
     else if (keyword == "MEASUREMENTVAR") {

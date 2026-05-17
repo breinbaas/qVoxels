@@ -2,6 +2,9 @@ QT += widgets quick quickwidgets location positioning
 
 CONFIG += c++17
 RESOURCES += resources.qrc
+INCLUDEPATH += C:/msys64/clang64/include
+LIBS += -LC:/msys64/clang64/lib -lproj
+
 # LIBS += -lproj
 
 # You can make your code fail to compile if it uses deprecated APIs.
@@ -13,6 +16,7 @@ SOURCES += \
     cpt.cpp \
     cptmap.cpp \
     cptmapmanager.cpp \
+    helpers.cpp \
     main.cpp \
     mainwindow.cpp \
     project.cpp
@@ -22,6 +26,7 @@ HEADERS += \
     cpt.h \
     cptmap.h \
     cptmapmanager.h \
+    helpers.h \
     mainwindow.h \
     project.h
 

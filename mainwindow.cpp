@@ -41,6 +41,8 @@ void MainWindow::setupMap(){
                  << "\nMax Lat/Lng:" << maxLat << "," << maxLng;
     });
 
+    connect(m_mapWidget, &CptMap::cptListChanged, this, &MainWindow::on_cptListChanged);
+
     m_mapWidget->setProject(m_currentProject);
 }
 
@@ -161,6 +163,7 @@ void MainWindow::on_actionOpen_triggered()
 
     // Emit a signal or call a method to update the UI (e.g., enable/disable actions)
     // updateProjectActions();
+    m_mapWidget->setProject(m_currentProject);
 }
 
 
@@ -250,4 +253,9 @@ void MainWindow::on_actionCPTs_triggered()
     }
 
     QMessageBox::information(this, tr("CPT Import Summary"), summaryMessage);
+}
+
+void MainWindow::on_cptListChanged()
+{
+    qDebug() << "update map";
 }
