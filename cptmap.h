@@ -19,7 +19,7 @@ public:
 signals:
     // Forwarded from QML area selection bounding box bounding rectangles
     void areaSelected(double minLat, double minLng, double maxLat, double maxLng);
-    void cptListChanged();
+    //void cptListChanged();
 
 private:
     QQuickWidget *m_quickWidget;

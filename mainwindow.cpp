@@ -41,7 +41,7 @@ void MainWindow::setupMap(){
                  << "\nMax Lat/Lng:" << maxLat << "," << maxLng;
     });
 
-    connect(m_mapWidget, &CptMap::cptListChanged, this, &MainWindow::on_cptListChanged);
+    //connect(m_mapWidget, &CptMap::cptListChanged, this, &MainWindow::on_cptListChanged);
 
     m_mapWidget->setProject(m_currentProject);
 }

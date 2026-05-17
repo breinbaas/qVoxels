@@ -8,11 +8,9 @@
 CptMapManager::CptMapManager() {}
 
 void CptMapManager::refreshFromProject(Project *project) {
+    if (!project) return;
+
     m_cptList.clear();
-    if (!project) {
-        emit cptListChanged();
-        return;
-    }
 
     // Iterate through your QList<Cpt*> map collection
     const QList<Cpt*>& projectCpts = project->cpts();
@@ -22,8 +20,8 @@ void CptMapManager::refreshFromProject(Project *project) {
         QVariantMap mapItem;
         // Adjust these method calls (.id(), .latitude()) to match your actual Cpt.h signatures
         mapItem["name"] = cpt->name();
-        mapItem["lat"] = cpt->latitude();
-        mapItem["lng"] = cpt->longitude();
+        mapItem["latitude"] = cpt->latitude();
+        mapItem["longitude"] = cpt->longitude();
 
         m_cptList.append(mapItem);
     }

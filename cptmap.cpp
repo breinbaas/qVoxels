@@ -34,7 +34,7 @@ void CptMap::initUi() {
     m_quickWidget->setSource(QUrl(QStringLiteral("qrc:/map.qml")));
 
     connect(m_mapManager, &CptMapManager::qmlAreaSelected, this, &CptMap::areaSelected);
-    connect(m_mapManager, &CptMapManager::cptListChanged, this, &CptMap::cptListChanged);
+    //connect(m_mapManager, &CptMapManager::cptListChanged, this, &CptMap::cptListChanged);
 }
 
 void CptMap::setProject(Project *project) {
