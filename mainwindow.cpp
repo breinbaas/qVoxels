@@ -26,10 +26,9 @@ MainWindow::MainWindow(QWidget *parent)
     m_projectTreeView = new ProjectTreeView(this);
     setupTreeView();
 
-
-
-
-
+    // add cpt chart
+    m_cptChart = new CptChartWidget(this);
+    ui->interpretationLayout->addWidget(m_cptChart);
 }
 
 MainWindow::~MainWindow()
@@ -96,6 +95,16 @@ void MainWindow::updateUI()
         child->setData(0, Qt::UserRole, cpt->filePath());
     }
 
+}
+
+void MainWindow::updateInterpretation(const QString cptName)
+{
+    for(Cpt* cpt: m_currentProject->cpts()) {
+        if (cpt->name().compare(cptName)==0) {
+            m_cptChart->setCpt(cpt);
+            break;
+        }
+    }
 }
 
 
@@ -315,8 +324,9 @@ void MainWindow::onTreeViewItemClicked(QTreeWidgetItem *item, int column)
 
     if (item->parent() == m_cptsBranch) {
         QString itemName = item->text(0);
-        QString filePath = item->data(0, Qt::UserRole).toString();
-        qDebug() << "Selected CPT Name:" << itemName << " file path: "<<filePath;
+        // QString filePath = item->data(0, Qt::UserRole).toString();
+        // qDebug() << "Selected CPT Name:" << itemName << " file path: "<<filePath;
+        updateInterpretation(itemName);
     }
 }
 

@@ -5,6 +5,7 @@
 #include "project.h"
 #include "cptmap.h"
 #include "projecttreeview.h"
+#include "cptchartwidget.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -30,7 +31,14 @@ private slots:
 private:
     Ui::MainWindow *ui;
     Project *m_currentProject = nullptr; // Member to hold the current project
+
+    // widgets
+    // the map
     CptMap *m_mapWidget = nullptr;
+
+    // the cpt chart
+    CptChartWidget* m_cptChart = nullptr;
+
     ProjectTreeView *m_projectTreeView = nullptr;
     QTreeWidgetItem* m_cptsBranch = nullptr;
     QTreeWidgetItem* m_boreholesBranch = nullptr;
@@ -39,6 +47,7 @@ private:
     void setupMap();
     void updateMap();
     void updateUI();
+    void updateInterpretation(const QString cptName);
     void setupTreeView();
 };
 #endif // MAINWINDOW_H

@@ -1,5 +1,4 @@
-QT += widgets quick quickwidgets location positioning
-
+QT += widgets quick quickwidgets location positioning charts
 CONFIG += c++17
 RESOURCES += resources.qrc
 INCLUDEPATH += C:/msys64/clang64/include
@@ -14,6 +13,7 @@ LIBS += -LC:/msys64/clang64/lib -lproj
 SOURCES += \
     borehole.cpp \
     cpt.cpp \
+    cptchartwidget.cpp \
     cptmap.cpp \
     cptmapmanager.cpp \
     helpers.cpp \
@@ -25,6 +25,7 @@ SOURCES += \
 HEADERS += \
     borehole.h \
     cpt.h \
+    cptchartwidget.h \
     cptmap.h \
     cptmapmanager.h \
     helpers.h \
