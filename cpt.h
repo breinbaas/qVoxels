@@ -26,6 +26,7 @@ public:
 
     // Getters / Setters to access data
     QString name() const { return m_name; }
+    QString filePath() const { return m_filePath;}
     double x() const { return m_x; }
     double y() const { return m_y; }
     double latitude() const { return m_latitude; }
@@ -40,8 +41,11 @@ public:
     QList<double> fr() const { return m_fr; }
     QList<double> u2() const { return m_u2; }
 
+    void setFilePath(const QString filePath) {m_filePath = filePath;}
+
 private:
     QString m_name = "";
+    QString m_filePath = "";
     double m_x = 0.0;
     double m_y = 0.0;
     double m_latitude = 0.0;

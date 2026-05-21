@@ -19,6 +19,7 @@ Cpt* Cpt::fromGef(const QString &gefFilePath, QObject *parent)
     }
 
     Cpt *cpt = new Cpt(parent);
+    cpt->setFilePath(gefFilePath);
     GefMetadata metadata;
     double top = 0.0;
     bool readingHeader = true;

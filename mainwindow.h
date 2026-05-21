@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include "project.h"
 #include "cptmap.h"
+#include "projecttreeview.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -23,13 +24,21 @@ private slots:
     void on_actionNew_triggered();
     void on_actionOpen_triggered();
     void on_actionCPTs_triggered();
+    void onTreeViewItemClicked(QTreeWidgetItem* item, int column);
 
-    void on_cptListChanged();
 
 private:
     Ui::MainWindow *ui;
     Project *m_currentProject = nullptr; // Member to hold the current project
     CptMap *m_mapWidget = nullptr;
+    ProjectTreeView *m_projectTreeView = nullptr;
+    QTreeWidgetItem* m_cptsBranch = nullptr;
+    QTreeWidgetItem* m_boreholesBranch = nullptr;
+    QTreeWidgetItem* m_interpretationsBranch = nullptr;
+
     void setupMap();
+    void updateMap();
+    void updateUI();
+    void setupTreeView();
 };
 #endif // MAINWINDOW_H

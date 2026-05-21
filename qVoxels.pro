@@ -19,7 +19,8 @@ SOURCES += \
     helpers.cpp \
     main.cpp \
     mainwindow.cpp \
-    project.cpp
+    project.cpp \
+    projecttreeview.cpp
 
 HEADERS += \
     borehole.h \
@@ -28,7 +29,8 @@ HEADERS += \
     cptmapmanager.h \
     helpers.h \
     mainwindow.h \
-    project.h
+    project.h \
+    projecttreeview.h
 
 FORMS += \
     mainwindow.ui

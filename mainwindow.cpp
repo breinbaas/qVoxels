@@ -16,9 +16,20 @@ MainWindow::MainWindow(QWidget *parent)
     , m_currentProject(nullptr)
 {
     ui->setupUi(this);
+    setWindowTitle(tr("qVoxels - No Project"));
+
+    // add map widget
     m_mapWidget = new CptMap(this);
     setupMap();
-    setWindowTitle(tr("qVoxels - No Project"));
+
+    // add treeview
+    m_projectTreeView = new ProjectTreeView(this);
+    setupTreeView();
+
+
+
+
+
 }
 
 MainWindow::~MainWindow()
@@ -40,10 +51,51 @@ void MainWindow::setupMap(){
                  << "\nMin Lat/Lng:" << minLat << "," << minLng
                  << "\nMax Lat/Lng:" << maxLat << "," << maxLng;
     });
+}
 
-    //connect(m_mapWidget, &CptMap::cptListChanged, this, &MainWindow::on_cptListChanged);
+void MainWindow::setupTreeView(){
+    ui->verticalLayout->addWidget(m_projectTreeView);
+    m_projectTreeView->setColumnCount(1);
+    m_projectTreeView->setHeaderLabels(QStringList() << "Project");
+    m_projectTreeView->setHeaderHidden(false);
+    m_boreholesBranch= new QTreeWidgetItem(m_projectTreeView);
+    m_boreholesBranch->setText(0, "Boreholes");
+    m_boreholesBranch->setExpanded(true);
+    m_cptsBranch = new QTreeWidgetItem(m_projectTreeView);
+    m_cptsBranch->setText(0, "CPTs");
+    m_cptsBranch->setExpanded(true);
+    m_interpretationsBranch= new QTreeWidgetItem(m_projectTreeView);
+    m_interpretationsBranch->setText(0, "Interpretations");
+    m_interpretationsBranch->setExpanded(true);
 
+    // signal slots
+    connect(m_projectTreeView, &QTreeWidget::itemClicked,
+            this, &MainWindow::onTreeViewItemClicked);
+}
+
+void MainWindow::updateMap()
+{
     m_mapWidget->setProject(m_currentProject);
+}
+
+void MainWindow::updateUI()
+{
+    qDebug () << "updateUI";
+    if (!m_currentProject) {
+        return;
+    }
+
+    if (m_cptsBranch)
+        m_cptsBranch->takeChildren();
+
+
+    // update treeview
+    for(Cpt* cpt : m_currentProject->cpts()) {
+        QTreeWidgetItem* child = new QTreeWidgetItem(m_cptsBranch);
+        child->setText(0, cpt->name());
+        child->setData(0, Qt::UserRole, cpt->filePath());
+    }
+
 }
 
 
@@ -125,8 +177,8 @@ void MainWindow::on_actionNew_triggered()
     // Update the window title to reflect the new project
     setWindowTitle(tr("qVoxels - %1%2").arg(m_currentProject->name(), m_currentProject->isDirty() ? "*" : ""));
 
-    // Emit a signal or call a method to update the UI (e.g., enable/disable actions)
-    //updateProjectActions();
+    updateMap();
+    updateUI();
 }
 void MainWindow::on_actionOpen_triggered()
 {
@@ -161,9 +213,8 @@ void MainWindow::on_actionOpen_triggered()
                              tr("Project '%1' opened successfully from:\n%2")
                                  .arg(m_currentProject->name(), m_currentProject->path()));
 
-    // Emit a signal or call a method to update the UI (e.g., enable/disable actions)
-    // updateProjectActions();
-    m_mapWidget->setProject(m_currentProject);
+    updateMap();
+    updateUI();
 }
 
 
@@ -253,9 +304,19 @@ void MainWindow::on_actionCPTs_triggered()
     }
 
     QMessageBox::information(this, tr("CPT Import Summary"), summaryMessage);
+
+    updateMap();
+    updateUI();
 }
 
-void MainWindow::on_cptListChanged()
+void MainWindow::onTreeViewItemClicked(QTreeWidgetItem *item, int column)
 {
-    qDebug() << "update map";
+    if (!item) return;
+
+    if (item->parent() == m_cptsBranch) {
+        QString itemName = item->text(0);
+        QString filePath = item->data(0, Qt::UserRole).toString();
+        qDebug() << "Selected CPT Name:" << itemName << " file path: "<<filePath;
+    }
 }
+

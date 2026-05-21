@@ -105,7 +105,7 @@ Item {
                     // Access properties natively via modelData or model (depending on your model type)
                     center: QtPositioning.coordinate(modelData.latitude, modelData.longitude)
                     radius: 5 // Radius in meters
-                    color: "red"
+                    color: "black"
                     border.color: "darkred"
                     border.width: 1
                 }
@@ -113,11 +113,11 @@ Item {
                 MapQuickItem {
                     coordinate: QtPositioning.coordinate(modelData.latitude, modelData.longitude)
                     anchorPoint.x: sourceItem.width / 2  // Center horizontally
-                    anchorPoint.y: sourceItem.height + 5 // Position just above the dot
+                    anchorPoint.y: sourceItem.height + 7 // Position just above the dot
 
                     sourceItem: Text {
                         text: modelData.name || "CPT"
-                        font.pixelSize: 12
+                        font.pixelSize: 15
                         color: "black"
 
                         // Optional styling to make text legible against a map
