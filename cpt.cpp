@@ -10,6 +10,12 @@ Cpt::Cpt(QObject *parent) : QObject(parent)
 {
 }
 
+Cpt::~Cpt()
+{
+    if(m_soilProfile) delete m_soilProfile;
+    m_soilProfile = nullptr;
+}
+
 Cpt* Cpt::fromGef(const QString &gefFilePath, QObject *parent)
 {
     QFile file(gefFilePath);

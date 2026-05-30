@@ -6,6 +6,8 @@
 #include <QNetworkReply>
 #include <QJsonObject>
 
+#include "soilprofile.h"
+
 class Api : public QObject
 {
     Q_OBJECT
@@ -14,10 +16,10 @@ public:
     ~Api();
 
     // Main execution endpoint
-    void uploadCptGef(const QString &filePath, int method, double minLayerHeight, double peatFrictionRatio);
+    void uploadCptGef(const QString &cptName, const QString &filePath, int method, double minLayerHeight, double peatFrictionRatio);
 
 signals:
-    void interpretationReady(const QJsonObject &jsonResult);
+    void interpretationReceived(const QString &cptName, SoilProfile *soilProfile);
     void errorOccurred(const QString &errorString);
 
 private slots:

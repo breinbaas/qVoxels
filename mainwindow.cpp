@@ -30,16 +30,6 @@ MainWindow::MainWindow(QWidget *parent)
     m_cptChart = new CptChartWidget(this);
     ui->interpretationLayout->addWidget(m_cptChart);
 
-    // add api
-    m_apiService = new Api(this);
-    connect(m_apiService, &Api::interpretationReady, this, [](const QJsonObject &jsonResult){
-        qDebug() << "Success! Layer parameters parsed: " << jsonResult;
-        // Map data to chart widget arrays here...
-    });
-    connect(m_apiService, &Api::errorOccurred, this, [](const QString &errorMsg){
-        qWarning() << "Network Engine Error:" << errorMsg;
-    });
-
     // connect some signals and slots
     connect(m_projectTreeView, &ProjectTreeView::cptSelected,
             this, &MainWindow::onCptSelected);
@@ -54,6 +44,8 @@ MainWindow::~MainWindow()
     m_currentProject = nullptr;
     delete ui;    
 }
+
+
 
 void MainWindow::setupMap(){
     QLayout *frameLayout = ui->frmMain->layout();
@@ -345,11 +337,14 @@ void MainWindow::onCptSelected(Cpt *cpt){
 
 void MainWindow::onCptInterpretationSelected(Cpt *cpt)
 {
-    if (!cpt) return;
-    qDebug() << "MainWindow is getting interpretation for:" << cpt->name();
-
-    m_apiService->uploadCptGef(cpt->filePath(), 2, 0.5, 6.0);
-
+    if(cpt){
+        m_currentProject->getCptInterpretation(cpt);
+    }
 }
+
+// void MainWindow::onApiCptInterpretationReceived(Cpt *cpt, SoilProfile *soilProfile)
+// {
+//     //
+// }
 
 

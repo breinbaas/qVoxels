@@ -33,7 +33,10 @@ HEADERS += \
     helpers.h \
     mainwindow.h \
     project.h \
-    projecttreeview.h
+    projecttreeview.h \
+    soilcolorpalette.h \
+    soillayer.h \
+    soilprofile.h
 
 FORMS += \
     mainwindow.ui

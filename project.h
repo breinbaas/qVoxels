@@ -6,6 +6,8 @@
 
 #include "cpt.h"
 #include "borehole.h"
+#include "soilprofile.h"
+#include "api.h"
 
 class Project : public QObject
 {
@@ -17,9 +19,14 @@ private:
     QList<Cpt*> m_cpts;
     QList<Borehole> m_boreholes;
 
+    // the api
+    Api *m_apiService = nullptr;
+
+
     bool m_isDirty;
 
     void loadExistingCpts();
+
 public:
     explicit Project(QObject *parent = nullptr);
 
@@ -38,8 +45,13 @@ public:
 
     void addCpt(Cpt *cpt);
     QPair<bool, QString> importCptFile(const QString &sourceFilePath, bool copyFileToProjectDir = true);
+    void getCptInterpretation(Cpt *cpt);
 
     ~Project();
+
+public slots:
+    void onApiCptInterpretationReceived(QString cptName, SoilProfile *soilProfile);
+
 signals:
     void dirtyChanged(bool dirty);
 };

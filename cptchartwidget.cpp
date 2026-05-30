@@ -48,11 +48,21 @@ CptChartWidget::CptChartWidget(QWidget *parent)
 
     setChart(m_chart);
     setRenderHint(QPainter::Antialiasing);
+
+    m_chart->setBackgroundVisible(false);
+    m_chart->setPlotAreaBackgroundVisible(false);
+
 }
 
 void CptChartWidget::setCpt(Cpt* cpt)
 {
-    if (!cpt) return;
+    m_currentCpt = cpt;
+    if (!cpt) {
+        m_cptSeries->clear();
+        m_frSeries->clear();
+        viewport()->update(); // Trigger a redraw to clear previous profiles
+        return;
+    }
 
     m_chart->setTitle(cpt->name());
 
@@ -92,45 +102,72 @@ void CptChartWidget::setCpt(Cpt* cpt)
     m_yAxis->setTickType(QValueAxis::TicksDynamic);
     m_yAxis->setTickAnchor(0.0);
     m_yAxis->setTickInterval(5.0);
+
+    viewport()->update();
 }
 
-// void CptChartWidget::addSoilLayer(double minQc, double maxQc, double topZ, double bottomZ, const QColor &color)
-// {
-//     // 1. Create native graphics scene item tracking
-//     QGraphicsRectItem* rectItem = new QGraphicsRectItem();
+void CptChartWidget::drawBackground(QPainter *painter, const QRectF &rect)
+{
+    QChartView::drawBackground(painter, rect);
 
-//     // 2. Set fill color with alpha values passed directly via the QColor configuration
-//     rectItem->setBrush(QBrush(color));
-//     rectItem->setPen(Qt::NoPen); // No border line around the layer item
+    // 2. Early exit if no CPT data or no profile exists
+    if (!m_currentCpt || !m_currentCpt->soilProfile()) {
+        return;
+    }
 
-//     // Ensure the fill overlay places beneath the main blue line trace data
-//     rectItem->setZValue(m_cptSeries->zValue() - 1);
+    SoilProfile* profile = m_currentCpt->soilProfile();
+    QList<QObject*> layers = profile->soilLayers();
+    if (layers.isEmpty()) return;
 
-//     // 3. Add to graphics scene
-//     this->scene()->addItem(rectItem);
+    // 3. Get the bounding box of the inner plot area (where lines are drawn)
+    QRectF plotArea = m_chart->plotArea();
+    if (!plotArea.isValid()) return;
 
-//     // 4. Save metadata so it can handle resize scaling conversions smoothly
-//     m_layers.append({minQc, maxQc, topZ, bottomZ, color, rectItem});
+    painter->save();
 
-//     updateRectangles();
-// }
+    // Clip drawing strictly to the plot area so layers don't bleed out into axis labels
+    painter->setClipRect(plotArea);
+    painter->setPen(Qt::NoPen);
 
-// void CptChartWidget::updateRectangles()
-// {
-//     for (const LayerData &layer : m_layers) {
-//         // Convert the structural abstract numerical data bounds into visual pixel targets
-//         QPointF topLeft = m_chart->mapToPosition(QPointF(layer.minQc, layer.topZ));
-//         QPointF bottomRight = m_chart->mapToPosition(QPointF(layer.maxQc, layer.bottomZ));
+    for (QObject* obj : layers) {
+        // Safe dynamic cast assuming your QList contains SoilLayer instances
+        SoilLayer* layer = qobject_cast<SoilLayer*>(obj);
+        if (!layer) continue;
 
-//         // Define bounding rect area
-//         QRectF rectBounds(topLeft, bottomRight);
-//         layer.visualRect->setRect(rectBounds);
-//     }
-// }
+        // Fetch layer depth parameters (adjust these property names if your SoilLayer uses different ones, e.g., depthStart/depthEnd)
+        double topZ = layer->top();
+        double bottomZ = layer->bottom();
+        QString code = layer->soilCode(); // Assuming a getter string like "organic_clay"
+
+        // 4. Map the Z values to screen Y coordinates using the chart's axes
+        // Since X coordinates don't matter for depth mapping, we pass 0.0 dummy value
+        double topYPixel = m_chart->mapToPosition(QPointF(0.0, topZ)).y();
+        double bottomYPixel = m_chart->mapToPosition(QPointF(0.0, bottomZ)).y();
+
+        // Account for reversed axes safely: ensure top/bottom pixel tracking matches viewport coordinates
+        double yStart = qMin(topYPixel, bottomYPixel);
+        double yEnd = qMax(topYPixel, bottomYPixel);
+        double rectHeight = yEnd - yStart;
+
+        if (rectHeight <= 0) continue;
+
+        // 5. Fetch color from palette and inject alpha (transparency)
+        QColor layerColor = m_palette.getColor(code);
+        layerColor.setAlpha(100); // 0 (transparent) to 255 (opaque). 100 is roughly 40% opacity.
+
+        // 6. Draw the rectangle spanning the full width of the plotArea
+        QRectF layerRect(plotArea.left(), yStart, plotArea.width(), rectHeight);
+        painter->setBrush(layerColor);
+        painter->drawRect(layerRect);
+    }
+
+    painter->restore();
+}
+
+
 
 void CptChartWidget::resizeEvent(QResizeEvent *event)
 {
     QChartView::resizeEvent(event);
-    // Recalculate pixel mapping coordinates anytime user pulls UI scale handles
-    //updateRectangles();
+    viewport()->update();
 }

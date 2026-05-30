@@ -6,6 +6,8 @@
 #include <QString>
 #include <QMap>
 
+#include "soilprofile.h"
+
 // Constants
 const int GEF_COLUMN_Z = 1;
 const int GEF_COLUMN_QC = 2;
@@ -20,6 +22,10 @@ class Cpt : public QObject
 
 public:
     explicit Cpt(QObject *parent = nullptr);
+    ~Cpt();
+
+    void setSoilProfile(SoilProfile *soilProfile) {m_soilProfile = soilProfile;}
+    SoilProfile* soilProfile() const { return m_soilProfile; }
 
     // Static factory method (Returns nullptr if parsing fails, throwing an exception/error could also be handled via bool)
     static Cpt* fromGef(const QString &gefFilePath, QObject *parent = nullptr);
@@ -44,6 +50,7 @@ public:
     void setFilePath(const QString filePath) {m_filePath = filePath;}
 
 private:
+    SoilProfile *m_soilProfile = nullptr;
     QString m_name = "";
     QString m_filePath = "";
     double m_x = 0.0;

@@ -23,13 +23,13 @@ public:
     ~MainWindow() override;
 
 
-
 private slots:
     void on_actionNew_triggered();
     void on_actionOpen_triggered();
     void on_actionCPTs_triggered();
     void onCptSelected(Cpt *cpt);
     void onCptInterpretationSelected(Cpt *cpt);
+    //void onApiCptInterpretationReceived(Cpt *cpt, SoilProfile *soilProfile);
 
 private:
     Ui::MainWindow *ui;
@@ -40,11 +40,7 @@ private:
     CptMap *m_mapWidget = nullptr;
 
     // the cpt chart
-    CptChartWidget* m_cptChart = nullptr;
-
-    // the api
-    Api *m_apiService = nullptr;
-
+    CptChartWidget* m_cptChart = nullptr;    
     ProjectTreeView *m_projectTreeView = nullptr;
     QTreeWidgetItem* m_cptsBranch = nullptr;
     QTreeWidgetItem* m_boreholesBranch = nullptr;

@@ -1,16 +1,23 @@
 // project.cpp
 #include "project.h"
+
 #include <QDir>
 #include <QFileInfo>
 #include <QDebug>
 #include <QFile>
 #include <QDirIterator>
 
-
 Project::Project(QObject *parent)
     : QObject{parent}
     , m_isDirty{false}
-{}
+{
+    // add api
+    m_apiService = new Api(this);
+    connect(m_apiService, &Api::errorOccurred, this, [](const QString &errorMsg){
+        qWarning() << "Network Engine Error:" << errorMsg;
+    });
+    connect(m_apiService, &Api::interpretationReceived, this, &Project::onApiCptInterpretationReceived);
+}
 
 Project::~Project()
 {
@@ -18,6 +25,20 @@ Project::~Project()
     // Since Cpt objects are parented to this Project,
     // they will be deleted when the Project is deleted.
 }
+
+void Project::onApiCptInterpretationReceived(QString cptName, SoilProfile *soilProfile)
+{
+    for(Cpt* cpt: m_cpts)
+    {
+        if (cpt->name() ==cptName){
+            cpt->setSoilProfile(soilProfile);
+            // todo write soilprofile to project folder as csv
+            m_isDirty = true;
+            break;
+        }
+    }
+}
+
 
 Project *Project::fromPath(const QString &projectPath, QObject *parent)
 {
@@ -162,3 +183,12 @@ void Project::loadExistingCpts()
         }
     }
 }
+
+void Project::getCptInterpretation(Cpt *cpt)
+{
+    if (!cpt) return;
+    qDebug() << "Project is getting interpretation for:" << cpt->name();
+
+    m_apiService->uploadCptGef(cpt->name(), cpt->filePath(), 2, 0.5, 6.0);
+}
+

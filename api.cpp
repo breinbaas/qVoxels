@@ -7,6 +7,8 @@
 #include <QJsonDocument>
 #include <QCoreApplication>
 
+#include "soilprofile.h"
+
 Api::Api(QObject *parent)
     : QObject(parent)
     , m_manager(new QNetworkAccessManager(this))
@@ -56,7 +58,7 @@ Api::~Api()
     // QNetworkAccessManager child cleanup handled automatically by Qt parent tree
 }
 
-void Api::uploadCptGef(const QString &filePath, int method, double minLayerHeight, double peatFrictionRatio)
+void Api::uploadCptGef(const QString &cptName, const QString &filePath, int method, double minLayerHeight, double peatFrictionRatio)
 {
     QFile *file = new QFile(filePath, this);
     if (!file->open(QIODevice::ReadOnly)) {
@@ -89,6 +91,7 @@ void Api::uploadCptGef(const QString &filePath, int method, double minLayerHeigh
     configJson["method"] = method;
     configJson["minimum_layerheight"] = minLayerHeight;
     configJson["peat_friction_ratio"] = peatFrictionRatio;
+    configJson["cpt_name"] = cptName;
 
     QJsonDocument doc(configJson);
     QHttpPart textPart;
@@ -120,9 +123,13 @@ void Api::onReplyFinished(QNetworkReply *reply)
         return;
     }
 
-    if (doc.isObject()) {
-        emit interpretationReady(doc.object());
+    QJsonObject rootObject = doc.object();
+    QString cptName = rootObject["cpt_name"].toString();
+
+    if (rootObject.contains("soil_profile") && rootObject["soil_profile"].isObject()) {
+        SoilProfile *profile = SoilProfile::fromJson(rootObject["soil_profile"].toObject(), this);
+        emit interpretationReceived(cptName, profile);
     } else {
-        emit errorOccurred("Response was valid JSON, but not an object structure.");
+        emit errorOccurred("Response was valid JSON, but could not be converted to a SoilProfile.");
     }
 }
