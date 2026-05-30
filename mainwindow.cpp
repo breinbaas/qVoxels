@@ -218,9 +218,9 @@ void MainWindow::on_actionOpen_triggered()
     // Update the window title to reflect the opened project
     setWindowTitle(tr("qVoxels - %1%2").arg(m_currentProject->name(), m_currentProject->isDirty() ? "*" : ""));
 
-    QMessageBox::information(this, tr("Project Opened"),
-                             tr("Project '%1' opened successfully from:\n%2")
-                                 .arg(m_currentProject->name(), m_currentProject->path()));
+    // QMessageBox::information(this, tr("Project Opened"),
+    //                          tr("Project '%1' opened successfully from:\n%2")
+    //                              .arg(m_currentProject->name(), m_currentProject->path()));
 
     updateMap();
     updateUI();

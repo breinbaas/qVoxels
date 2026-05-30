@@ -20,6 +20,7 @@ CptChartWidget::CptChartWidget(QWidget *parent)
 
     // Configure Axes
     m_xAxis->setTitleText("qc (MPa)");
+    m_xAxis->setLabelsColor(QColor(0, 0, 255));
     m_yAxis->setTitleText("Depth / Elevation (z)");
 
     m_frXAxis->setTitleText("Friction Ratio Fr (%)");
@@ -55,27 +56,35 @@ void CptChartWidget::setCpt(Cpt* cpt)
 
     m_chart->setTitle(cpt->name());
 
-    m_cptSeries->clear();
-    m_frSeries->clear();
-    m_layers.clear(); // Clear old rectangles if reloading data
-
     QList<double> qcValues = cpt->qc();
     QList<double> zValues = cpt->z();
     QList<double> frValues = cpt->fr();
 
     double minZ = 9999.0;
     double maxZ = -9999.0;
-
-    // Populate data stream safely
     int dataSize = qMin(qcValues.size(), zValues.size());
-    for (int i = 0; i < dataSize; ++i) {
-        m_cptSeries->append(qcValues[i], zValues[i]);
-        m_frSeries->append(frValues[i], zValues[i]);
 
-        if (zValues[i] < minZ) minZ = zValues[i];
-        if (zValues[i] > maxZ) maxZ = zValues[i];
+    // 1. Allocate memory upfront to prevent reallocations
+    QList<QPointF> cptPoints;
+    QList<QPointF> frPoints;
+    cptPoints.reserve(dataSize);
+    frPoints.reserve(dataSize);
+
+    // 2. Compute points and min/max in a single rapid loop
+    for (int i = 0; i < dataSize; ++i) {
+        double z = zValues[i];
+        cptPoints.append(QPointF(qcValues[i], z));
+        frPoints.append(QPointF(frValues[i], z));
+
+        if (z < minZ) minZ = z;
+        if (z > maxZ) maxZ = z;
     }
 
+    // 3. Update the series data atomically in a single operation
+    m_cptSeries->replace(cptPoints);
+    m_frSeries->replace(frPoints);
+
+    // 4. Update ranges afterward
     m_xAxis->setRange(0, 20.0);
     double roundedMaxZ = std::ceil(maxZ);
     double roundedMinZ = std::floor(minZ);
