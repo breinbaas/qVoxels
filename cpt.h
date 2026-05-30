@@ -72,4 +72,7 @@ private:
     static void parseDataLine(Cpt *cpt, const QString &line, const GefMetadata &metadata, double top);
 };
 
+// to make QVariant aware of this class...
+Q_DECLARE_METATYPE(Cpt*)
+
 #endif // CPT_H

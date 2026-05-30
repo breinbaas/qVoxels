@@ -6,6 +6,7 @@
 #include "cptmap.h"
 #include "projecttreeview.h"
 #include "cptchartwidget.h"
+#include "api.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -21,12 +22,14 @@ public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
 
+
+
 private slots:
     void on_actionNew_triggered();
     void on_actionOpen_triggered();
     void on_actionCPTs_triggered();
-    void onTreeViewItemClicked(QTreeWidgetItem* item, int column);
-
+    void onCptSelected(Cpt *cpt);
+    void onCptInterpretationSelected(Cpt *cpt);
 
 private:
     Ui::MainWindow *ui;
@@ -39,6 +42,9 @@ private:
     // the cpt chart
     CptChartWidget* m_cptChart = nullptr;
 
+    // the api
+    Api *m_apiService = nullptr;
+
     ProjectTreeView *m_projectTreeView = nullptr;
     QTreeWidgetItem* m_cptsBranch = nullptr;
     QTreeWidgetItem* m_boreholesBranch = nullptr;
@@ -49,5 +55,6 @@ private:
     void updateUI();
     void updateInterpretation(const QString cptName);
     void setupTreeView();
+
 };
 #endif // MAINWINDOW_H

@@ -18,6 +18,14 @@ private:
     Project* m_project;
 
 signals:
+    void cptSelected(Cpt *cpt);
+    void getCptInterpretationSelected(Cpt *cpt);
+
+private slots:
+    // Slot to handle the item click
+    void handleItemClicked(QTreeWidgetItem *item, int column);
+    void showContextMenu(const QPoint &pos);
+
 };
 
 #endif // PROJECTTREEVIEW_H

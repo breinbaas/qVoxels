@@ -29,6 +29,24 @@ MainWindow::MainWindow(QWidget *parent)
     // add cpt chart
     m_cptChart = new CptChartWidget(this);
     ui->interpretationLayout->addWidget(m_cptChart);
+
+    // add api
+    m_apiService = new Api(this);
+    connect(m_apiService, &Api::interpretationReady, this, [](const QJsonObject &jsonResult){
+        qDebug() << "Success! Layer parameters parsed: " << jsonResult;
+        // Map data to chart widget arrays here...
+    });
+    connect(m_apiService, &Api::errorOccurred, this, [](const QString &errorMsg){
+        qWarning() << "Network Engine Error:" << errorMsg;
+    });
+
+    // connect some signals and slots
+    connect(m_projectTreeView, &ProjectTreeView::cptSelected,
+            this, &MainWindow::onCptSelected);
+
+    connect(m_projectTreeView, &ProjectTreeView::getCptInterpretationSelected,
+            this, &MainWindow::onCptInterpretationSelected);
+
 }
 
 MainWindow::~MainWindow()
@@ -68,9 +86,11 @@ void MainWindow::setupTreeView(){
     m_interpretationsBranch->setExpanded(true);
 
     // signal slots
-    connect(m_projectTreeView, &QTreeWidget::itemClicked,
-            this, &MainWindow::onTreeViewItemClicked);
+    connect(m_projectTreeView, &ProjectTreeView::cptSelected,
+            this, &MainWindow::onCptSelected);
 }
+
+
 
 void MainWindow::updateMap()
 {
@@ -92,7 +112,7 @@ void MainWindow::updateUI()
     for(Cpt* cpt : m_currentProject->cpts()) {
         QTreeWidgetItem* child = new QTreeWidgetItem(m_cptsBranch);
         child->setText(0, cpt->name());
-        child->setData(0, Qt::UserRole, cpt->filePath());
+        child->setData(0, Qt::UserRole, QVariant::fromValue<Cpt*>(cpt));
     }
 
 }
@@ -318,15 +338,18 @@ void MainWindow::on_actionCPTs_triggered()
     updateUI();
 }
 
-void MainWindow::onTreeViewItemClicked(QTreeWidgetItem *item, int column)
-{
-    if (!item) return;
+void MainWindow::onCptSelected(Cpt *cpt){
 
-    if (item->parent() == m_cptsBranch) {
-        QString itemName = item->text(0);
-        // QString filePath = item->data(0, Qt::UserRole).toString();
-        // qDebug() << "Selected CPT Name:" << itemName << " file path: "<<filePath;
-        updateInterpretation(itemName);
-    }
+    updateInterpretation(cpt->name());
 }
+
+void MainWindow::onCptInterpretationSelected(Cpt *cpt)
+{
+    if (!cpt) return;
+    qDebug() << "MainWindow is getting interpretation for:" << cpt->name();
+
+    m_apiService->uploadCptGef(cpt->filePath(), 2, 0.5, 6.0);
+
+}
+
 

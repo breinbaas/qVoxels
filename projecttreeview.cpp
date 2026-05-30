@@ -1,5 +1,9 @@
 #include "projecttreeview.h"
 
+#include <QMouseEvent>
+#include <QApplication>
+#include <QMenu>
+
 #include "project.h"
 #include "cpt.h"
 
@@ -9,6 +13,10 @@ ProjectTreeView::ProjectTreeView(QWidget *parent)
 {
     setHeaderHidden(true);
     setColumnCount(1);
+    setContextMenuPolicy(Qt::CustomContextMenu);
+
+    connect(this, &QTreeWidget::itemClicked, this, &ProjectTreeView::handleItemClicked);
+    connect(this, &QWidget::customContextMenuRequested, this, &ProjectTreeView::showContextMenu);
 }
 
 void ProjectTreeView::setProject(Project *project)
@@ -53,4 +61,66 @@ void ProjectTreeView::setProject(Project *project)
         setCurrentItem(topLevelItem(0));
     }
 
+}
+
+void ProjectTreeView::handleItemClicked(QTreeWidgetItem *item, int column)
+{
+    Q_UNUSED(column);
+
+    if (!item) {
+        return;
+    }
+
+    // Since this signal fires perfectly for standard select/click actions,
+    // we don't need to manually check QApplication::mouseButtons().
+    QVariant data = item->data(0, Qt::UserRole);
+    if (data.canConvert<Cpt*>()) {
+        Cpt *clickedCpt = data.value<Cpt*>();
+        if (clickedCpt) {
+            emit cptSelected(clickedCpt);
+        }
+    }
+}
+
+void ProjectTreeView::showContextMenu(const QPoint &pos)
+{
+    // 1. Get the item at the right-clicked position
+    QTreeWidgetItem *item = itemAt(pos);
+    if (!item) {
+        return;
+    }
+
+    // 2. Extract and verify data type
+    QVariant data = item->data(0, Qt::UserRole);
+    if (!data.canConvert<Cpt*>()) {
+        return; // Only show menu for actual CPT items
+    }
+
+    Cpt *clickedCpt = data.value<Cpt*>();
+    if (!clickedCpt) {
+        return;
+    }
+
+    // 3. Create and populate the context menu
+    QMenu menu(this);
+    QAction *getInterpretationAction = menu.addAction("Get Interpretation");
+    QAction *removeAction = menu.addAction("Remove");
+
+    // 4. Map the local widget position to global screen position for the popup
+    QPoint globalPos = mapToGlobal(pos);
+    QAction *selectedAction = menu.exec(globalPos);
+
+    // 5. Respond to the chosen action
+    if (selectedAction == getInterpretationAction) {
+        emit getCptInterpretationSelected(clickedCpt);
+
+    } /*else if (selectedAction == removeAction) {
+        // Handle "Remove" data logic safely:
+        if (m_project) {
+            // e.g., m_project->removeCpt(clickedCpt);
+        }
+
+        // Remove visually from the QTreeWidget
+        delete item;
+    }*/
 }

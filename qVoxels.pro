@@ -11,6 +11,7 @@ LIBS += -LC:/msys64/clang64/lib -lproj
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
 SOURCES += \
+    api.cpp \
     borehole.cpp \
     cpt.cpp \
     cptchartwidget.cpp \
@@ -23,6 +24,7 @@ SOURCES += \
     projecttreeview.cpp
 
 HEADERS += \
+    api.h \
     borehole.h \
     cpt.h \
     cptchartwidget.h \
