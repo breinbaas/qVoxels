@@ -53,8 +53,22 @@ void ProjectTreeView::setProject(Project *project)
         cptItem->setData(0, Qt::UserRole, QVariant::fromValue(cpt));
     }
 
+    QTreeWidgetItem *interpretationsBranchItem = new QTreeWidgetItem(projectRootItem);
+    interpretationsBranchItem->setText(0, "Interpretations");
+    for (Cpt *cpt : m_project->cpts()) {
+        if(cpt->soilProfile()){
+            QTreeWidgetItem *spItem = new QTreeWidgetItem(interpretationsBranchItem);
+            spItem->setText(0, cpt->name());
+            // Store the Cpt* in a custom user role for later retrieval
+            spItem->setData(0, Qt::UserRole, QVariant::fromValue(cpt->soilProfile()));
+        }
+    }
+
+
     projectRootItem->setExpanded(true); // Expand the project root by default
     cptsBranchItem->setExpanded(true);  // Expand the CPTs branch by default
+    interpretationsBranchItem->setExpanded(true);
+
 
     // Ensure the project root item is visible and selected if it's the only one
     if (topLevelItemCount() > 0) {
@@ -78,6 +92,16 @@ void ProjectTreeView::handleItemClicked(QTreeWidgetItem *item, int column)
         Cpt *clickedCpt = data.value<Cpt*>();
         if (clickedCpt) {
             emit cptSelected(clickedCpt);
+        }
+    // }else if (data.canConvert<SoilProfile*>()) {
+    //     SoilProfile *clickedSoilProfile = data.value<SoilProfile*>();
+    //     if (clickedSoilProfile) {
+    //         emit soilProfileSelected(clickedSoilProfile);
+    //     }
+    } else if (data.canConvert<VoxelModel*>()) {
+        VoxelModel *clickedVoxelModel = data.value<VoxelModel*>();
+        if (clickedVoxelModel) {
+            emit voxelModelSelected(clickedVoxelModel);
         }
     }
 }

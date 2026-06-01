@@ -30,6 +30,13 @@ public:
     void setBottom(double bottom) { if (m_bottom != bottom) { m_bottom = bottom; emit bottomChanged(); } }
     void setTop(double top) { if (m_top != top) { m_top = top; emit topChanged(); } }
     void setSoilCode(const QString &code) { if (m_soilCode != code) { m_soilCode = code; emit soilCodeChanged(); } }
+    QJsonObject toJson() const {
+        QJsonObject json;
+        json["bottom"] = m_bottom;
+        json["top"] = m_top;
+        json["soil_code"] = m_soilCode;
+        return json;
+    }
 
 signals:
     void bottomChanged();

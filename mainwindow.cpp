@@ -30,9 +30,16 @@ MainWindow::MainWindow(QWidget *parent)
     m_cptChart = new CptChartWidget(this);
     ui->interpretationLayout->addWidget(m_cptChart);
 
+    // add glb viewer
+    m_glbViewer = new GlbViewerWidget(this);
+    ui->glbViewerLayout->addWidget(m_glbViewer);
+
     // connect some signals and slots
     connect(m_projectTreeView, &ProjectTreeView::cptSelected,
             this, &MainWindow::onCptSelected);
+
+    connect(m_projectTreeView, &ProjectTreeView::voxelModelSelected,
+            this, &MainWindow::onVoxelModelSelected);
 
     connect(m_projectTreeView, &ProjectTreeView::getCptInterpretationSelected,
             this, &MainWindow::onCptInterpretationSelected);
@@ -76,6 +83,10 @@ void MainWindow::setupTreeView(){
     m_interpretationsBranch= new QTreeWidgetItem(m_projectTreeView);
     m_interpretationsBranch->setText(0, "Interpretations");
     m_interpretationsBranch->setExpanded(true);
+    m_modelsBranch= new QTreeWidgetItem(m_projectTreeView);
+    m_modelsBranch->setText(0, "Voxel models");
+    m_modelsBranch->setExpanded(true);
+
 
     // signal slots
     connect(m_projectTreeView, &ProjectTreeView::cptSelected,
@@ -105,8 +116,19 @@ void MainWindow::updateUI()
         QTreeWidgetItem* child = new QTreeWidgetItem(m_cptsBranch);
         child->setText(0, cpt->name());
         child->setData(0, Qt::UserRole, QVariant::fromValue<Cpt*>(cpt));
+
+        if(cpt->soilProfile()){
+            QTreeWidgetItem* child = new QTreeWidgetItem(m_interpretationsBranch);
+            child->setText(0, cpt->name());
+            child->setData(0, Qt::UserRole, QVariant::fromValue<SoilProfile*>(cpt->soilProfile()));
+        }
     }
 
+    for(VoxelModel* vm : m_currentProject->voxelModels()){
+        QTreeWidgetItem* child = new QTreeWidgetItem(m_modelsBranch);
+        child->setText(0, vm->name());
+        child->setData(0, Qt::UserRole, QVariant::fromValue<VoxelModel*>(vm));
+    }
 }
 
 void MainWindow::updateInterpretation(const QString cptName)
@@ -117,6 +139,11 @@ void MainWindow::updateInterpretation(const QString cptName)
             break;
         }
     }
+}
+
+void MainWindow::updateVoxelModel(const QString &filePath)
+{
+    m_glbViewer->loadModel(filePath);
 }
 
 
@@ -335,16 +362,34 @@ void MainWindow::onCptSelected(Cpt *cpt){
     updateInterpretation(cpt->name());
 }
 
+void MainWindow::onVoxelModelSelected(VoxelModel *voxelModel)
+{
+    qDebug () << "Voxel model selected:" << voxelModel->name();
+    updateVoxelModel(voxelModel->filePath());
+}
+
 void MainWindow::onCptInterpretationSelected(Cpt *cpt)
 {
     if(cpt){
-        m_currentProject->getCptInterpretation(cpt);
+        m_currentProject->getApiCptInterpretation(cpt);
     }
 }
 
-// void MainWindow::onApiCptInterpretationReceived(Cpt *cpt, SoilProfile *soilProfile)
-// {
-//     //
-// }
+void MainWindow::on_actionCpt_Interpretations_triggered()
+{
+    // TODO -> gebruik progressbar
+    if(m_currentProject){
+        for(Cpt* cpt:m_currentProject->cpts()){
+            m_currentProject->getApiCptInterpretation(cpt);
+        }
+    }
+}
 
+
+void MainWindow::on_actionVoxel_Model_triggered()
+{
+    if(m_currentProject){
+        m_currentProject->getApiVoxelModel();
+    }
+}
 

@@ -47,6 +47,9 @@ public:
     QList<double> fr() const { return m_fr; }
     QList<double> u2() const { return m_u2; }
 
+    double top() const {return m_z.first(); }
+    double bottom() const {return m_z.last(); }
+
     void setFilePath(const QString filePath) {m_filePath = filePath;}
 
 private:

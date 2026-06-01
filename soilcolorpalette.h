@@ -5,10 +5,10 @@
 #include <QMap>
 #include <QColor>
 
-class SoilColorPalette : public QObject {
-    Q_OBJECT
+class SoilColorPalette {
+
 public:
-    explicit SoilColorPalette(QObject *parent = nullptr) : QObject(parent) {
+    explicit SoilColorPalette(QObject *parent = nullptr){
         // Hardcoded defaults based on your dict
         m_palette["preexcavated"] = QColor("#6f6664");
         m_palette["organic_clay"] = QColor("#32e052");
@@ -20,9 +20,9 @@ public:
         m_palette["peat"]         = QColor("#7b530b");
     }
 
-    // Invokable method to fetch colors dynamically in C++ or QML
-    Q_INVOKABLE QColor getColor(const QString &soilCode) const {
-        return m_palette.value(soilCode, QColor("#FFFFFF")); // Returns white if not found
+
+    QColor getColor(const QString &soilCode) const {
+        return m_palette.value(soilCode, QColor("#FFFFFF"));
     }
 
 private:

@@ -1,4 +1,4 @@
-QT += widgets quick quickwidgets location positioning charts
+QT += widgets quick quickwidgets location positioning charts quick3d
 CONFIG += c++17
 RESOURCES += resources.qrc
 INCLUDEPATH += C:/msys64/clang64/include
@@ -17,11 +17,14 @@ SOURCES += \
     cptchartwidget.cpp \
     cptmap.cpp \
     cptmapmanager.cpp \
+    glbviewerwidget.cpp \
     helpers.cpp \
     main.cpp \
     mainwindow.cpp \
     project.cpp \
-    projecttreeview.cpp
+    projecttreeview.cpp \
+    soilprofile.cpp \
+    voxelmodel.cpp
 
 HEADERS += \
     api.h \
@@ -30,13 +33,15 @@ HEADERS += \
     cptchartwidget.h \
     cptmap.h \
     cptmapmanager.h \
+    glbviewerwidget.h \
     helpers.h \
     mainwindow.h \
     project.h \
     projecttreeview.h \
     soilcolorpalette.h \
     soillayer.h \
-    soilprofile.h
+    soilprofile.h \
+    voxelmodel.h
 
 FORMS += \
     mainwindow.ui
@@ -48,6 +53,7 @@ else: unix:!android: target.path = /opt/$${TARGET}/bin
 
 DISTFILES += \
     CODING.md \
+    glbviewer.qml \
     map.qml
 
 RESOURCES += \

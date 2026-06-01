@@ -5,6 +5,7 @@
 
 class Project;
 class Cpt;
+class VoxelModel;
 
 class ProjectTreeView : public QTreeWidget
 {
@@ -19,6 +20,7 @@ private:
 
 signals:
     void cptSelected(Cpt *cpt);
+    void voxelModelSelected(VoxelModel *voxelModel);
     void getCptInterpretationSelected(Cpt *cpt);
 
 private slots:

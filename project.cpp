@@ -7,6 +7,8 @@
 #include <QFile>
 #include <QDirIterator>
 
+#include "soilprofile.h"
+
 Project::Project(QObject *parent)
     : QObject{parent}
     , m_isDirty{false}
@@ -17,6 +19,7 @@ Project::Project(QObject *parent)
         qWarning() << "Network Engine Error:" << errorMsg;
     });
     connect(m_apiService, &Api::interpretationReceived, this, &Project::onApiCptInterpretationReceived);
+    connect(m_apiService, &Api::voxelModelReceived, this, &Project::onApiVoxelModelReceived);
 }
 
 Project::~Project()
@@ -26,18 +29,7 @@ Project::~Project()
     // they will be deleted when the Project is deleted.
 }
 
-void Project::onApiCptInterpretationReceived(QString cptName, SoilProfile *soilProfile)
-{
-    for(Cpt* cpt: m_cpts)
-    {
-        if (cpt->name() ==cptName){
-            cpt->setSoilProfile(soilProfile);
-            // todo write soilprofile to project folder as csv
-            m_isDirty = true;
-            break;
-        }
-    }
-}
+
 
 
 Project *Project::fromPath(const QString &projectPath, QObject *parent)
@@ -74,6 +66,7 @@ Project *Project::fromPath(const QString &projectPath, QObject *parent)
     project->setDirty(false); // An opened project is not dirty initially
 
     project->loadExistingCpts();
+    project->loadExistingModels();
 
     return project;
 }
@@ -182,13 +175,126 @@ void Project::loadExistingCpts()
             qWarning() << "Failed to load existing CPT from project directory:" << filePath << "-" << result.second;
         }
     }
+
+    // now load any soilprofiles and connect them to the cpts
+    QString soilProfilesDirPath = QDir(m_path).filePath("interpretations");
+    QDir soilProfilesDir(soilProfilesDirPath);
+
+    if (!soilProfilesDir.exists()) {
+        qWarning() << "Interpretations directory does not exist for project:" << soilProfilesDirPath;
+        return;
+    }
+
+    QDirIterator itInterpretations(soilProfilesDirPath, QStringList() << "*.json", QDir::Files | QDir::Readable, QDirIterator::Subdirectories);
+    while (itInterpretations.hasNext()) {
+        QString filePath = itInterpretations.next();
+        SoilProfile* sp = SoilProfile::fromJsonFile(filePath);
+
+        if(!sp){
+             qWarning() << "Failed to load existing interpretation from project directory:" << filePath;
+        }else{
+            QString interpretationName = QFileInfo(filePath).baseName();
+            for(Cpt* cpt : m_cpts){
+                if(cpt->name() == interpretationName){
+                    cpt->setSoilProfile(sp);
+                    break;
+                }
+            }
+        }
+    }
 }
 
-void Project::getCptInterpretation(Cpt *cpt)
+void Project::loadExistingModels()
+{
+    QString modelDirPath = QDir(m_path).filePath("models");
+    QDir modelsDir(modelDirPath);
+
+    if (!modelsDir.exists()) {
+        qWarning() << "Voxel models directory does not exist for project:" << modelDirPath;
+        return;
+    }
+
+    QDirIterator it(modelDirPath, QStringList() << "*.glb", QDir::Files | QDir::Readable, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        QString filePath = it.next();
+        VoxelModel* vm = new VoxelModel();
+        vm->setFilePath(filePath);
+        m_voxelModels.append(vm);
+    }
+}
+
+
+/* API INTERACTION */
+void Project::getApiCptInterpretation(Cpt *cpt)
 {
     if (!cpt) return;
-    qDebug() << "Project is getting interpretation for:" << cpt->name();
+    m_apiService->getInterpretationFromCpt(cpt->name(), cpt->filePath(), 2, 0.5, 6.0);
+}
 
-    m_apiService->uploadCptGef(cpt->name(), cpt->filePath(), 2, 0.5, 6.0);
+void Project::getApiVoxelModel()
+{
+    float xmin = 1e9;
+    float xmax = -1e9;
+    float ymin= 1e9;
+    float ymax = -1e9;
+    float zmin = 1e9;
+    float zmax = -1e9;
+
+    QList<SoilProfile*> soilProfiles;
+    for(Cpt* cpt:m_cpts){
+        if(cpt->soilProfile()){
+            soilProfiles.append(cpt->soilProfile());
+            xmin = qMin(xmin, cpt->x());
+            xmax = qMax(xmax, cpt->x());
+            ymin = qMin(ymin, cpt->y());
+            ymax = qMax(ymax, cpt->y());
+            zmin = qMin(zmin, cpt->bottom());
+            zmax = qMax(zmax, cpt->top());
+        }
+    }
+
+    if(soilProfiles.isEmpty()){
+        qWarning("No soilprofiles found to create voxelmodel from");
+        return;
+    }
+
+    ApiVoxelModelRequestParameters parameters;
+    parameters.xmin = xmin;
+    parameters.xmax = xmax;
+    parameters.ymin = ymin;
+    parameters.ymax = ymax;
+    parameters.zmin = zmin;
+    parameters.zmax = zmax;
+    parameters.dx = 5;
+    parameters.dy = 5;
+    parameters.dz = 1;
+    parameters.anisotropy_ratio = 50;
+    parameters.step_size = 0.5;
+
+    QString modelsDirPath = QDir(m_path).filePath("models");
+    m_apiService->getVoxelModel(soilProfiles, parameters, modelsDirPath);
+}
+
+/* API SLOTS */
+void Project::onApiCptInterpretationReceived(QString cptName, SoilProfile *soilProfile)
+{
+    for(Cpt* cpt: m_cpts)
+    {
+        if (cpt->name() ==cptName){
+            cpt->setSoilProfile(soilProfile);
+            QString soilProfileDirPath = QDir(m_path).filePath(QString("interpretations/%1.json").arg(cptName));
+            soilProfile->toJsonFile(soilProfileDirPath);
+            m_isDirty = true;
+            break;
+        }
+    }
+}
+
+void Project::onApiVoxelModelReceived(const QString filePath)
+{
+    VoxelModel *voxelModel = new VoxelModel();
+    voxelModel->setFilePath(filePath);
+    m_voxelModels.append(voxelModel);
+    m_isDirty = true;
 }
 
