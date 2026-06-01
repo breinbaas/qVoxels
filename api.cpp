@@ -146,6 +146,7 @@ void Api::getVoxelModel(QList<SoilProfile*> soilProfiles, ApiVoxelModelRequestPa
     mainPayload["anisotropy_ratio"] = parameters.anisotropy_ratio;
     mainPayload["step_size"] = parameters.step_size;
     mainPayload["soil_colors"] = colorsObj;
+    mainPayload["center"] = true;
 
     QJsonDocument doc(mainPayload);
     QByteArray jsonData = doc.toJson(QJsonDocument::Compact);
