@@ -52,13 +52,11 @@ MainWindow::~MainWindow()
     delete ui;    
 }
 
-
-
 void MainWindow::setupMap(){
     QLayout *frameLayout = ui->frmMain->layout();
     if (!frameLayout) {
         frameLayout = new QVBoxLayout(ui->frmMain);
-        frameLayout->setContentsMargins(0, 0, 0, 0); // Make the map fit completely flush
+        frameLayout->setContentsMargins(0, 0, 0, 0);
     }
 
     ui->frmMain->layout()->addWidget(m_mapWidget);
@@ -109,7 +107,6 @@ void MainWindow::updateUI()
 
     if (m_cptsBranch)
         m_cptsBranch->takeChildren();
-
 
     // update treeview
     for(Cpt* cpt : m_currentProject->cpts()) {
@@ -176,11 +173,9 @@ void MainWindow::on_actionNew_triggered()
         return;
     }
 
-    // Construct the full path for the new project directory
     QDir projectDir(parentDirPath);
     QString fullProjectPath = projectDir.filePath(projectName);
 
-    // Create the main project directory and its subdirectories
     QDir newProjectBaseDir(fullProjectPath);
     if (!newProjectBaseDir.mkpath(".")) { // Create the base project directory itself
         QMessageBox::critical(this, tr("Error Creating Project"),
@@ -188,7 +183,6 @@ void MainWindow::on_actionNew_triggered()
         return;
     }
 
-    // List of subdirectories to create
     QStringList subDirs = {"cpts", "boreholes", "interpretations", "maps", "models"};
     bool allSubDirsCreated = true;
 
@@ -210,7 +204,6 @@ void MainWindow::on_actionNew_triggered()
                                  .arg(projectName, fullProjectPath));
     }
 
-    // Delete the old project if one exists before creating a new one
     if (m_currentProject) {
         delete m_currentProject;
         m_currentProject = nullptr;
@@ -220,9 +213,8 @@ void MainWindow::on_actionNew_triggered()
     m_currentProject = new Project(this);
     m_currentProject->setName(projectName);
     m_currentProject->setPath(fullProjectPath);
-    m_currentProject->setDirty(true); // New project is dirty by default
+    m_currentProject->setDirty(true);
 
-    // Update the window title to reflect the new project
     setWindowTitle(tr("qVoxels - %1%2").arg(m_currentProject->name(), m_currentProject->isDirty() ? "*" : ""));
 
     updateMap();
@@ -252,14 +244,9 @@ void MainWindow::on_actionOpen_triggered()
         delete m_currentProject;
     }
 
-    m_currentProject = openedProject; // Set the newly opened project as current
+    m_currentProject = openedProject;
 
-    // Update the window title to reflect the opened project
-    setWindowTitle(tr("qVoxels - %1%2").arg(m_currentProject->name(), m_currentProject->isDirty() ? "*" : ""));
-
-    // QMessageBox::information(this, tr("Project Opened"),
-    //                          tr("Project '%1' opened successfully from:\n%2")
-    //                              .arg(m_currentProject->name(), m_currentProject->path()));
+    setWindowTitle(tr("qVoxels - %1%2").arg(m_currentProject->name(), m_currentProject->isDirty() ? "*" : ""));    
 
     updateMap();
     updateUI();
@@ -274,7 +261,7 @@ void MainWindow::on_actionCPTs_triggered()
     }
 
     QString cptsDirPath = QDir(m_currentProject->path()).filePath("cpts");
-    QDir cptsDir(cptsDirPath); // Create a QDir object for the CPTs directory
+    QDir cptsDir(cptsDirPath);
 
     QStringList filePaths = QFileDialog::getOpenFileNames(this,
                                                           tr("Select CPT Files to Import"),
@@ -282,17 +269,17 @@ void MainWindow::on_actionCPTs_triggered()
                                                           tr("CPT Files (*.gef);;All Files (*)"));
 
     if (filePaths.isEmpty()) {
-        return; // User cancelled file selection
+        return;
     }
 
     QStringList successfulImports;
     QStringList failedImports;
-    bool projectWasDirty = m_currentProject->isDirty(); // Check dirty state before imports
+    bool projectWasDirty = m_currentProject->isDirty();
 
     for (const QString &filePath : filePaths) {
         QFileInfo fileInfo(filePath);
         QString fileName = fileInfo.fileName();
-        QString destinationPath = cptsDir.filePath(fileName); // Use the QDir object
+        QString destinationPath = cptsDir.filePath(fileName);
 
         bool proceedWithImport = true;
         if (QFile::exists(destinationPath)) {
@@ -307,12 +294,11 @@ void MainWindow::on_actionCPTs_triggered()
             if (reply == QMessageBox::No) {
                 failedImports.append(QString("%1 (Skipped - file already exists)").arg(fileName));
                 proceedWithImport = false;
-            }
-            // If Yes, proceed with import (importCptFile will handle overwriting)
+            }            
         }
 
         if (proceedWithImport) {
-            QPair<bool, QString> result = m_currentProject->importCptFile(filePath, true); // Pass true to copy the file
+            QPair<bool, QString> result = m_currentProject->importCptFile(filePath, true);
             if (result.first) {
                 successfulImports.append(fileName);
             } else {
@@ -321,12 +307,10 @@ void MainWindow::on_actionCPTs_triggered()
         }
     }
 
-    // Update the window title if the project's dirty state changed due to imports
     if (m_currentProject->isDirty() && !projectWasDirty) {
         setWindowTitle(tr("qVoxels - %1%2").arg(m_currentProject->name(), "*"));
     }
 
-    // Display summary of import results
     QString summaryMessage;
     QTextStream stream(&summaryMessage);
     stream << tr("CPT Import Results:\n\n");
@@ -377,7 +361,7 @@ void MainWindow::onCptInterpretationSelected(Cpt *cpt)
 
 void MainWindow::on_actionCpt_Interpretations_triggered()
 {
-    // TODO -> gebruik progressbar
+    // TODO -> progressbar
     if(m_currentProject){
         for(Cpt* cpt:m_currentProject->cpts()){
             m_currentProject->getApiCptInterpretation(cpt);

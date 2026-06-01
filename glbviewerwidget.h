@@ -16,7 +16,7 @@ private slots:
     void onWidgetStatusChanged(QQuickWidget::Status status);
 
 private:
-    QString m_pendingModelPath; // Stores the path if QML isn't loaded yet
+    QString m_pendingModelPath;
 };
 
 #endif // GLBVIEWERWIDGET_H

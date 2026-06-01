@@ -14,28 +14,30 @@ class SoilLayer : public QObject {
 public:
     explicit SoilLayer(QObject *parent = nullptr) : QObject(parent), m_bottom(0), m_top(0) {}
 
-    // Factory method to create from JSON
-    static SoilLayer* fromJson(const QJsonObject &json, QObject *parent = nullptr) {
-        auto *layer = new SoilLayer(parent);
-        layer->setBottom(json["bottom"].toDouble());
-        layer->setTop(json["top"].toDouble());
-        layer->setSoilCode(json["soil_code"].toString());
-        return layer;
-    }
-
+    // getters
     double bottom() const { return m_bottom; }
     double top() const { return m_top; }
     QString soilCode() const { return m_soilCode; }
 
+    // setters
     void setBottom(double bottom) { if (m_bottom != bottom) { m_bottom = bottom; emit bottomChanged(); } }
     void setTop(double top) { if (m_top != top) { m_top = top; emit topChanged(); } }
     void setSoilCode(const QString &code) { if (m_soilCode != code) { m_soilCode = code; emit soilCodeChanged(); } }
+
+    // to and from json
     QJsonObject toJson() const {
         QJsonObject json;
         json["bottom"] = m_bottom;
         json["top"] = m_top;
         json["soil_code"] = m_soilCode;
         return json;
+    }    
+    static SoilLayer* fromJson(const QJsonObject &json, QObject *parent = nullptr) {
+        auto *layer = new SoilLayer(parent);
+        layer->setBottom(json["bottom"].toDouble());
+        layer->setTop(json["top"].toDouble());
+        layer->setSoilCode(json["soil_code"].toString());
+        return layer;
     }
 
 signals:

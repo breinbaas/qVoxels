@@ -15,6 +15,8 @@ Project::Project(QObject *parent)
 {
     // add api
     m_apiService = new Api(this);
+
+    // signals and slots connections
     connect(m_apiService, &Api::errorOccurred, this, [](const QString &errorMsg){
         qWarning() << "Network Engine Error:" << errorMsg;
     });
@@ -24,33 +26,26 @@ Project::Project(QObject *parent)
 
 Project::~Project()
 {
-    // QObjects automatically delete their children.
-    // Since Cpt objects are parented to this Project,
-    // they will be deleted when the Project is deleted.
+
 }
-
-
 
 
 Project *Project::fromPath(const QString &projectPath, QObject *parent)
 {
     QDir projectDir(projectPath);
 
-    // 1. Check if the path exists and is a directory
     if (!projectDir.exists() || !projectDir.isReadable()) {
         qWarning() << "Project path does not exist or is not readable:" << projectPath;
         return nullptr;
     }
 
-    // 2. Basic validation: Check for expected subdirectories to confirm it's a qVoxels project
-    // This is a simple check; more robust validation might involve a project file.
     QStringList expectedSubDirs = {"cpts", "boreholes", "interpretations", "maps", "models"};
     bool isValidProjectDir = false;
     for (const QString& subDir : expectedSubDirs) {
         if (projectDir.exists(subDir) && projectDir.cd(subDir)) {
             isValidProjectDir = true;
-            projectDir.cdUp(); // Go back to the project root
-            break; // Found at least one expected subdirectory
+            projectDir.cdUp();
+            break;
         }
     }
 
@@ -59,11 +54,10 @@ Project *Project::fromPath(const QString &projectPath, QObject *parent)
         return nullptr;
     }
 
-    // 3. Create a new Project object
     Project *project = new Project(parent);
     project->setPath(projectPath);
-    project->setName(QFileInfo(projectPath).fileName()); // Get the directory name as the project name
-    project->setDirty(false); // An opened project is not dirty initially
+    project->setName(QFileInfo(projectPath).fileName());
+    project->setDirty(false);
 
     project->loadExistingCpts();
     project->loadExistingModels();
@@ -111,13 +105,11 @@ void Project::setPath(const QString& path)
 void Project::addCpt(Cpt *cpt)
 {
     if (cpt && !m_cpts.contains(cpt)) {
-        m_cpts.append(cpt);
-        // If the CPT object's parent is not already 'this', set it.
-        // This ensures proper memory management (Cpt will be deleted when Project is).
+        m_cpts.append(cpt);        
         if (cpt->parent() != this) {
             cpt->setParent(this);
         }
-        setDirty(true); // Adding a CPT makes the project dirty
+        setDirty(true);
     }
 }
 
@@ -129,29 +121,21 @@ QPair<bool, QString> Project::importCptFile(const QString &sourceFilePath, bool 
     QString destinationPath = QDir(cptsDirPath).filePath(fileName);
 
     // Attempt to parse the CPT file
-    Cpt *newCpt = Cpt::fromGef(sourceFilePath, this); // Parent Cpt to this project
+    Cpt *newCpt = Cpt::fromGef(sourceFilePath, this);
 
     if (!newCpt) {
         return {false, QString("Failed to parse GEF file: %1").arg(fileName)};
     }
 
-    // If parsing is successful, handle file copying if requested
-    if (copyFileToProjectDir) {
-        // Check if the file already exists at the destination.
-        // For import, we typically overwrite or ask the user.
-        // Here, we assume the calling UI (MainWindow) handles the overwrite prompt.
-        // If it reaches here and copy is requested, we attempt to copy.
-        // QFile::copy will overwrite if the destination exists and is writable.
-        if (!QFile::copy(sourceFilePath, destinationPath)) {
-            // If copy fails, delete the Cpt object created by fromGef
+
+    if (copyFileToProjectDir) {        
+        if (!QFile::copy(sourceFilePath, destinationPath)) {            
             delete newCpt;
             return {false, QString("Failed to copy file to project folder: %1").arg(fileName)};
         }
     }
 
-    // Add Cpt object to the project's list
-    addCpt(newCpt); // This also sets the project dirty
-
+    addCpt(newCpt);
     return {true, QString("Successfully imported: %1").arg(fileName)};
 }
 
@@ -168,15 +152,12 @@ void Project::loadExistingCpts()
     QDirIterator it(cptsDirPath, QStringList() << "*.gef", QDir::Files | QDir::Readable, QDirIterator::Subdirectories);
     while (it.hasNext()) {
         QString filePath = it.next();
-        // Call importCptFile, but do NOT copy the file as it's already in the project directory.
-        // The 'false' for copyFileToProjectDir is crucial here.
         QPair<bool, QString> result = importCptFile(filePath, false);
         if (!result.first) {
             qWarning() << "Failed to load existing CPT from project directory:" << filePath << "-" << result.second;
         }
     }
 
-    // now load any soilprofiles and connect them to the cpts
     QString soilProfilesDirPath = QDir(m_path).filePath("interpretations");
     QDir soilProfilesDir(soilProfilesDirPath);
 

@@ -11,7 +11,6 @@ GlbViewerWidget::GlbViewerWidget(QWidget *parent)
     setFormat(QQuick3D::idealSurfaceFormat());
     setResizeMode(QQuickWidget::SizeRootObjectToView);
 
-    // Monitor loading status so we know exactly when it's safe to pass data
     connect(this, &QQuickWidget::statusChanged, this, &GlbViewerWidget::onWidgetStatusChanged);
 
     setSource(QUrl(QStringLiteral("qrc:/glbviewer.qml")));
@@ -26,7 +25,6 @@ GlbViewerWidget::GlbViewerWidget(QWidget *parent)
 
 void GlbViewerWidget::loadModel(const QString &localFilePath)
 {
-    // If QML is still loading, cache the path and wait
     if (status() != QQuickWidget::Ready) {
         qDebug() << "GlbViewerWidget: QML not ready yet. Caching path:" << localFilePath;
         m_pendingModelPath = localFilePath;
@@ -51,12 +49,10 @@ void GlbViewerWidget::onWidgetStatusChanged(QQuickWidget::Status status)
 {
     if (status == QQuickWidget::Ready) {
         qDebug() << "GlbViewerWidget: QML engine is Ready!";
-        // If a model path was requested before we finished loading, push it now
         if (!m_pendingModelPath.isEmpty()) {
             loadModel(m_pendingModelPath);
         }
     } else if (status == QQuickWidget::Error) {
-        // Output detailed syntax/asset compilation errors from QML
         qCritical() << "GlbViewerWidget: Critical QML Loading Errors:";
         for (const QQmlError &error : errors()) {
             qCritical() << "  Line" << error.line() << ":" << error.toString();

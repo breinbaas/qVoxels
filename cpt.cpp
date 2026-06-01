@@ -35,8 +35,6 @@ Cpt* Cpt::fromGef(const QString &gefFilePath, QObject *parent)
         QString line = in.readLine();
 
         if (readingHeader) {
-            // Replicating Python logic: if line doesn't contain "#ZID" (Note: check logic flow)
-            // Python: if line.find("#ZID") < 0: try to extract top.
             if (line.contains("#ZID")) {
                 QStringList args = line.split("=");
                 if (args.size() > 1) {
@@ -77,7 +75,7 @@ Cpt* Cpt::fromGef(const QString &gefFilePath, QObject *parent)
 
     file.close();
 
-    // Post processing: Calculate FR
+    // Post processing: Calculate friction ratio
     cpt->m_fr.clear();
     for (int i = 0; i < cpt->m_qc.size(); ++i) {
         double qc = cpt->m_qc[i];
@@ -126,7 +124,7 @@ void Cpt::parseHeaderLine(Cpt *cpt, const QString &line, GefMetadata &metadata)
 {
     QStringList args = line.split("=");
     if (args.size() < 2) {
-        return; // Skip or handle malformed lines safely
+        return;
     }
 
     QString keyword = args[0].trimmed().replace("#", "");
@@ -162,8 +160,6 @@ void Cpt::parseHeaderLine(Cpt *cpt, const QString &line, GefMetadata &metadata)
             WGS84Coord wgs84 = convertRDToWGS84(cpt->m_x, cpt->m_y);
             cpt->m_latitude = wgs84.latitude;
             cpt->m_longitude = wgs84.longitude;
-
-            //qDebug() << "Cpt latitude: " << cpt->m_latitude << " lon: " << cpt->m_longitude;
         }
     }
     else if (keyword == "MEASUREMENTVAR") {

@@ -8,8 +8,7 @@
 class SoilColorPalette {
 
 public:
-    explicit SoilColorPalette(QObject *parent = nullptr){
-        // Hardcoded defaults based on your dict
+    explicit SoilColorPalette(QObject *parent = nullptr){        
         m_palette["preexcavated"] = QColor("#6f6664");
         m_palette["organic_clay"] = QColor("#32e052");
         m_palette["clay"]         = QColor("#034b10");

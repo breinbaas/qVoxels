@@ -26,15 +26,13 @@ void CptMap::initUi() {
     layout->setContentsMargins(0, 0, 0, 0);
     layout->addWidget(m_quickWidget);
 
-    // Context variable remains named "cptManager" so you don't have to change your QML file
     QQmlContext *context = m_quickWidget->rootContext();
     context->setContextProperty("cptManager", m_mapManager);
 
     m_quickWidget->setResizeMode(QQuickWidget::SizeRootObjectToView);
     m_quickWidget->setSource(QUrl(QStringLiteral("qrc:/map.qml")));
 
-    connect(m_mapManager, &CptMapManager::qmlAreaSelected, this, &CptMap::areaSelected);
-    //connect(m_mapManager, &CptMapManager::cptListChanged, this, &CptMap::cptListChanged);
+    connect(m_mapManager, &CptMapManager::qmlAreaSelected, this, &CptMap::areaSelected);    
 }
 
 void CptMap::setProject(Project *project) {

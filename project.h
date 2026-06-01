@@ -15,15 +15,13 @@ class Project : public QObject
     Q_OBJECT
 
 private:
-    QString m_name; // Project name
-    QString m_path; // Project base path
+    QString m_name;
+    QString m_path;
     QList<Cpt*> m_cpts;
     QList<Borehole> m_boreholes;
     QList<VoxelModel*> m_voxelModels;
 
-    // the api
     Api *m_apiService = nullptr;
-
 
     bool m_isDirty;
 
@@ -32,17 +30,16 @@ private:
 
 public:
     explicit Project(QObject *parent = nullptr);
+    ~Project();
 
     static Project* fromPath(const QString &projectPath, QObject *parent = nullptr);
 
-    // Getters
     bool isDirty() const;
     QString name() const;
     QString path() const;
     const QList<Cpt*>& cpts() const { return m_cpts; }
     const QList<VoxelModel*> voxelModels() const {return m_voxelModels;}
 
-    // Setters
     void setDirty(bool dirty);
     void setName(const QString& name);
     void setPath(const QString& path);
@@ -50,12 +47,9 @@ public:
     void addCpt(Cpt *cpt);
     QPair<bool, QString> importCptFile(const QString &sourceFilePath, bool copyFileToProjectDir = true);
 
-    // API interaction
+    // API
     void getApiCptInterpretation(Cpt *cpt);
     void getApiVoxelModel();
-
-
-    ~Project();
 
 
 public slots:

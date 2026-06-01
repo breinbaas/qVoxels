@@ -23,8 +23,7 @@ signals:
     void voxelModelSelected(VoxelModel *voxelModel);
     void getCptInterpretationSelected(Cpt *cpt);
 
-private slots:
-    // Slot to handle the item click
+private slots:    
     void handleItemClicked(QTreeWidgetItem *item, int column);
     void showContextMenu(const QPoint &pos);
 

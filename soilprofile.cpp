@@ -1,4 +1,5 @@
 #include "soilprofile.h"
+#include "soillayer.h"
 
 #include <QFile>
 
@@ -10,11 +11,9 @@ SoilProfile* SoilProfile::fromJson(const QJsonObject &json, QObject *parent) {
     profile->setX(json["x"].toDouble());
     profile->setY(json["y"].toDouble());
 
-    // Parse nested array
     QJsonArray layersArray = json["soil_layers"].toArray();
     for (const QJsonValue &value : layersArray) {
         if (value.isObject()) {
-            // Pass 'profile' as parent for automatic memory management
             SoilLayer *layer = SoilLayer::fromJson(value.toObject(), profile);
             profile->m_soilLayers.append(layer);
         }
@@ -31,7 +30,6 @@ SoilProfile *SoilProfile::fromJsonFile(const QString &filePath, QObject *parent)
         return nullptr;
     }
 
-    // Read all content and parse into a JSON document
     QByteArray data = file.readAll();
     file.close();
 
@@ -59,10 +57,7 @@ bool SoilProfile::toJsonFile(const QString &filePath)
         return false;
     }
 
-    // Convert SoilProfile to JSON
     QJsonObject jsonObject = toJson();
-
-    // Wrap in a document (Indented format makes it human-readable)
     QJsonDocument doc(jsonObject);
     file.write(doc.toJson(QJsonDocument::Indented));
 
@@ -79,7 +74,6 @@ QJsonObject SoilProfile::toJson() const {
 
     QJsonArray layersArray;
     for (QObject* obj : m_soilLayers) {
-        // Cast the QObject* back to SoilLayer* to call its toJson()
         if (auto *layer = qobject_cast<SoilLayer*>(obj)) {
             layersArray.append(layer->toJson());
         }

@@ -9,11 +9,13 @@
 #include <QStandardPaths>
 
 #include "soilprofile.h"
+#include "soillayer.h"
 
 Api::Api(QObject *parent)
     : QObject(parent)
     , m_manager(new QNetworkAccessManager(this))
 {
+    // reads the .env file if any to get the api key that should be used for API requests.
     QString envPath = QCoreApplication::applicationDirPath() + "/.env";
     QFile file(envPath);
 
@@ -22,19 +24,16 @@ Api::Api(QObject *parent)
         while (!in.atEnd()) {
             QString line = in.readLine().trimmed();
 
-            // Skip comments or empty lines
             if (line.isEmpty() || line.startsWith('#')) {
                 continue;
             }
 
-            // Split by the first '=' character
             int separatorIdx = line.indexOf('=');
             if (separatorIdx != -1) {
                 QString key = line.left(separatorIdx).trimmed();
                 QString value = line.mid(separatorIdx + 1).trimmed();
 
                 if (key == "BREINBAAS_API_KEY") {
-                    // Strip quotes if they exist in the .env file
                     if (value.startsWith('"') && value.endsWith('"')) {
                         value = value.mid(1, value.length() - 2);
                     }
@@ -47,17 +46,18 @@ Api::Api(QObject *parent)
     }
 
     if(m_apiKey.isEmpty()) {
-        qDebug() << "No API key found!";
+        qWarning() << "No API key found!";
     }
 }
 
 Api::~Api()
 {
-    // QNetworkAccessManager child cleanup handled automatically by Qt parent tree
+
 }
 
 void Api::getInterpretationFromCpt(const QString &cptName, const QString &filePath, int method, double minLayerHeight, double peatFrictionRatio)
 {
+    // this function will use the Python API to get an interpretation of a CPT
     QFile *file = new QFile(filePath, this);
     if (!file->open(QIODevice::ReadOnly)) {
         emit errorOccurred(QString("Failed to open file: %1").arg(filePath));
@@ -65,16 +65,13 @@ void Api::getInterpretationFromCpt(const QString &cptName, const QString &filePa
         return;
     }
 
-    // 1. Prepare Target Endpoint & Security Headers
     QUrl url(m_baseUrl + "/api/slim/cpt_interpretation/from_gef");
     QNetworkRequest request(url);
     request.setRawHeader("accept", "application/json");
     request.setRawHeader("X-API-Key", m_apiKey.toUtf8());
 
-    // 2. Initialize Multipart Form Wrapper
     QHttpMultiPart *multiPart = new QHttpMultiPart(QHttpMultiPart::FormDataType, this);
 
-    // 3. Build File Part
     QHttpPart filePart;
     QFileInfo fileInfo(filePath);
     filePart.setHeader(QNetworkRequest::ContentDispositionHeader,
@@ -84,7 +81,6 @@ void Api::getInterpretationFromCpt(const QString &cptName, const QString &filePa
     file->setParent(multiPart); // Let multiPart track device lifespan
     multiPart->append(filePart);
 
-    // 4. Build Configuration Metadata JSON Part
     QJsonObject configJson;
     configJson["method"] = method;
     configJson["minimum_layerheight"] = minLayerHeight;
@@ -97,9 +93,8 @@ void Api::getInterpretationFromCpt(const QString &cptName, const QString &filePa
     textPart.setBody(doc.toJson(QJsonDocument::Compact));
     multiPart->append(textPart);
 
-    // 5. Fire Request
     QNetworkReply *reply = m_manager->post(request, multiPart);
-    multiPart->setParent(reply); // Automatically delete multipart metadata structures when raw transaction ends
+    multiPart->setParent(reply);
 
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         this->onReplyInterpretation(reply);
@@ -108,6 +103,8 @@ void Api::getInterpretationFromCpt(const QString &cptName, const QString &filePa
 
 void Api::getVoxelModel(QList<SoilProfile*> soilProfiles, ApiVoxelModelRequestParameters &parameters, const QString &modelsDirPath)
 {
+    // TODO check if there is anything to create (soilProfiles > 0)
+    // use the API to generate a voxel model and save it to the given path using the current date and time
     QJsonArray profilesArray;
     for (SoilProfile* profile : soilProfiles) {
         if (!profile) continue;
@@ -127,14 +124,14 @@ void Api::getVoxelModel(QList<SoilProfile*> soilProfiles, ApiVoxelModelRequestPa
         profilesArray.append(profileObj);
     }
 
-    // 2. Build the soil palette color translation map object
+    // TODO > own colors
     QJsonObject colorsObj;
     QStringList colorKeys = {"preexcavated", "organic_clay", "clay", "silty_clay", "silty_sand", "sand", "dense_sand", "peat"};
     for (const QString& key : colorKeys) {
         colorsObj[key] = parameters.palette.getColor(key).name(); // Extract CSS hex strings e.g. #fff000
     }
 
-    // 3. Bind everything to match payload schema configuration properties
+    // TODO -> parameters to payload function
     QJsonObject mainPayload;
     mainPayload["soil_profiles"] = profilesArray;
     mainPayload["x_min"] = parameters.xmin;
@@ -153,26 +150,22 @@ void Api::getVoxelModel(QList<SoilProfile*> soilProfiles, ApiVoxelModelRequestPa
     QJsonDocument doc(mainPayload);
     QByteArray jsonData = doc.toJson(QJsonDocument::Compact);
 
-    // 4. Create the request
     QUrl url(m_baseUrl + "/api/voxels/export/glb/3d");
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
     request.setRawHeader("accept", "application/json");
     request.setRawHeader("X-API-Key", m_apiKey.toUtf8());
 
-    // 5. Send post and process inside target binary downloader routine
     QNetworkReply *reply = m_manager->post(request, jsonData);
 
     connect(reply, &QNetworkReply::finished, this, [this, reply, modelsDirPath]() {
         this->onReplyVoxelModel(reply, modelsDirPath);
     });
-
 }
-
-
 
 void Api::onReplyInterpretation(QNetworkReply *reply)
 {
+    // called if the API returns an interpretation
     reply->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
@@ -180,7 +173,6 @@ void Api::onReplyInterpretation(QNetworkReply *reply)
         return;
     }
 
-    // Read payload payload
     QByteArray responseData = reply->readAll();
     QJsonParseError parseError;
     QJsonDocument doc = QJsonDocument::fromJson(responseData, &parseError);
@@ -202,6 +194,7 @@ void Api::onReplyInterpretation(QNetworkReply *reply)
 }
 
 void Api::onReplyVoxelModel(QNetworkReply *reply, const QString &modelsDirPath){
+    // called if a voxel model is returned
     reply->deleteLater();
 
     if (reply->error() != QNetworkReply::NoError) {
@@ -209,28 +202,24 @@ void Api::onReplyVoxelModel(QNetworkReply *reply, const QString &modelsDirPath){
         return;
     }
 
-    // 1. Determine local file storage path target (e.g. standard Downloads location)
     QString systemDownloadDir = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
     QDateTime currentDateTime = QDateTime::currentDateTime();
     QString timestamp = currentDateTime.toString("yyyyMMddhhmmss");
     QString fileName = timestamp + ".glb";
     QString savePath = modelsDirPath  + "/" +  fileName;
 
-    // 2. Stream layout array data bytes to file destination
     QFile file(savePath);
     if (!file.open(QIODevice::WriteOnly)) {
         emit errorOccurred(QString("Could not open destination path for writing file: %1").arg(savePath));
         return;
     }
 
-    // Write raw content directly to disk without parsing it as JSON text
     QByteArray rawBinaryGlb = reply->readAll();
     qint64 writtenBytes = file.write(rawBinaryGlb);
     file.close();
 
     if (writtenBytes > 0) {
-        qDebug() << "Successfully downloaded and saved 3D Voxel Engine assets to:" << savePath;
-        // Optional: Emit a custom signal to tell your engine logic/UI it's ready:
+        qDebug() << "Successfully downloaded and saved 3D Voxel Engine assets to:" << savePath;        
         emit voxelModelReceived(savePath);
     } else {
         emit errorOccurred("The server response file was returned completely empty.");

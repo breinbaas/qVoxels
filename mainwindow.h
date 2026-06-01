@@ -24,28 +24,25 @@ public:
 
 
 private slots:
+    // actions
     void on_actionNew_triggered();
     void on_actionOpen_triggered();
     void on_actionCPTs_triggered();
+    void on_actionCpt_Interpretations_triggered();
+    void on_actionVoxel_Model_triggered();
+
+    // treeview
     void onCptSelected(Cpt *cpt);
     void onVoxelModelSelected(VoxelModel *voxelModel);
     void onCptInterpretationSelected(Cpt *cpt);
-    //void onApiCptInterpretationReceived(Cpt *cpt, SoilProfile *soilProfile);
-
-    void on_actionCpt_Interpretations_triggered();
-
-    void on_actionVoxel_Model_triggered();
 
 private:
     Ui::MainWindow *ui;
-    Project *m_currentProject = nullptr; // Member to hold the current project
+    Project *m_currentProject = nullptr;
 
-    // widgets
-    // the map
+    // widgets    
     CptMap *m_mapWidget = nullptr;
-    GlbViewerWidget *m_glbViewer = nullptr;
-
-    // the cpt chart
+    GlbViewerWidget *m_glbViewer = nullptr;    
     CptChartWidget* m_cptChart = nullptr;    
     ProjectTreeView *m_projectTreeView = nullptr;
     QTreeWidgetItem* m_cptsBranch = nullptr;

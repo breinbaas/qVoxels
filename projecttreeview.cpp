@@ -22,30 +22,23 @@ ProjectTreeView::ProjectTreeView(QWidget *parent)
 void ProjectTreeView::setProject(Project *project)
 {
     if (m_project == project) {
-        return; // No change
+        return;
     }
 
     m_project = project;
     clear();
 
     if (!m_project) {
-        return; // No project to display
+        return;
     }
 
-    // 1. Create the root item for the project itself
-    QTreeWidgetItem *projectRootItem = new QTreeWidgetItem(this); // Add to the top-level of the QTreeWidget
-    // projectRootItem->setText(0, m_project->name());
-    projectRootItem->setText(0, "Project");
-    // Store the Project* in a custom user role for later retrieval
+    QTreeWidgetItem *projectRootItem = new QTreeWidgetItem(this); // Add to the top-level of the QTreeWidget   
+    projectRootItem->setText(0, "Project");    
     projectRootItem->setData(0, Qt::UserRole, QVariant::fromValue(m_project));
 
-    // 2. Add the "CPTs" branch as a child of the project root
+    // cpts
     QTreeWidgetItem *cptsBranchItem = new QTreeWidgetItem(projectRootItem);
     cptsBranchItem->setText(0, "CPTs");
-    // Optionally store a type identifier if you need to distinguish this branch later
-    // cptsBranchItem->setData(0, Qt::UserRole + 1, "CPTsBranch");
-
-    // 3. Populate CPT children under the "CPTs" branch
     for (Cpt *cpt : m_project->cpts()) {
         QTreeWidgetItem *cptItem = new QTreeWidgetItem(cptsBranchItem);
         cptItem->setText(0, cpt->name());
@@ -53,24 +46,21 @@ void ProjectTreeView::setProject(Project *project)
         cptItem->setData(0, Qt::UserRole, QVariant::fromValue(cpt));
     }
 
+    // interpretations
     QTreeWidgetItem *interpretationsBranchItem = new QTreeWidgetItem(projectRootItem);
     interpretationsBranchItem->setText(0, "Interpretations");
     for (Cpt *cpt : m_project->cpts()) {
         if(cpt->soilProfile()){
             QTreeWidgetItem *spItem = new QTreeWidgetItem(interpretationsBranchItem);
-            spItem->setText(0, cpt->name());
-            // Store the Cpt* in a custom user role for later retrieval
+            spItem->setText(0, cpt->name());            
             spItem->setData(0, Qt::UserRole, QVariant::fromValue(cpt->soilProfile()));
         }
     }
 
-
-    projectRootItem->setExpanded(true); // Expand the project root by default
-    cptsBranchItem->setExpanded(true);  // Expand the CPTs branch by default
+    projectRootItem->setExpanded(true);
+    cptsBranchItem->setExpanded(true);
     interpretationsBranchItem->setExpanded(true);
 
-
-    // Ensure the project root item is visible and selected if it's the only one
     if (topLevelItemCount() > 0) {
         setCurrentItem(topLevelItem(0));
     }
@@ -85,8 +75,6 @@ void ProjectTreeView::handleItemClicked(QTreeWidgetItem *item, int column)
         return;
     }
 
-    // Since this signal fires perfectly for standard select/click actions,
-    // we don't need to manually check QApplication::mouseButtons().
     QVariant data = item->data(0, Qt::UserRole);
     if (data.canConvert<Cpt*>()) {
         Cpt *clickedCpt = data.value<Cpt*>();
@@ -108,13 +96,11 @@ void ProjectTreeView::handleItemClicked(QTreeWidgetItem *item, int column)
 
 void ProjectTreeView::showContextMenu(const QPoint &pos)
 {
-    // 1. Get the item at the right-clicked position
     QTreeWidgetItem *item = itemAt(pos);
     if (!item) {
         return;
     }
 
-    // 2. Extract and verify data type
     QVariant data = item->data(0, Qt::UserRole);
     if (!data.canConvert<Cpt*>()) {
         return; // Only show menu for actual CPT items
@@ -125,16 +111,13 @@ void ProjectTreeView::showContextMenu(const QPoint &pos)
         return;
     }
 
-    // 3. Create and populate the context menu
     QMenu menu(this);
     QAction *getInterpretationAction = menu.addAction("Get Interpretation");
     QAction *removeAction = menu.addAction("Remove");
 
-    // 4. Map the local widget position to global screen position for the popup
     QPoint globalPos = mapToGlobal(pos);
     QAction *selectedAction = menu.exec(globalPos);
 
-    // 5. Respond to the chosen action
     if (selectedAction == getInterpretationAction) {
         emit getCptInterpretationSelected(clickedCpt);
 
